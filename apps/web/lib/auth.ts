@@ -34,13 +34,17 @@ export const getSession = cache(async (): Promise<Session | null> => {
     if (error || !data?.claims?.sub) return null;
     const userId = data.claims.sub;
     const email = typeof data.claims.email === "string" ? data.claims.email : undefined;
-    const { data: rows } = await sb.from("memberships")
-      .select("id, user_id, company_id, role, permissions, branch_ids, transfer_phone, disabled_at, created_at")
-      .eq("user_id", userId).is("disabled_at", null).order("created_at");
+    // These independent RLS-protected lookups run in parallel, removing one
+    // additional cross-region database round trip on every navigation.
+    const [{ data: rows }, { data: profile }] = await Promise.all([
+      sb.from("memberships")
+        .select("id, user_id, company_id, role, permissions, branch_ids, transfer_phone, disabled_at, created_at")
+        .eq("user_id", userId).is("disabled_at", null).order("created_at"),
+      sb.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle(),
+    ]);
     if (!rows?.length) return null;
     const wanted = store.get("company")?.value;
     const m = rows.find((r) => r.company_id === wanted) ?? rows[0]!;
-    const { data: profile } = await sb.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();
     const name = profile?.full_name ?? email ?? "";
     return {
       userId: userId,
