@@ -27,6 +27,17 @@ export const getQuestionnaire = (s: Session) => (isSupabase ? sb.getQuestionnair
 export const getAssistant = (s: Session) => (isSupabase ? sb.getAssistant(s) : Promise.resolve(mock.getAssistant()));
 export const getCurrentPlan = (s: Session) => (isSupabase ? sb.getCurrentPlan(s) : Promise.resolve(mock.getCurrentPlan()));
 export const getNotifications = (s: Session) => (isSupabase ? sb.getNotifications(s) : Promise.resolve(mock.getNotifications()));
+/** Small, RLS-aware counts for the persistent cabinet navigation. */
+export const getSidebarStats = (s: Session, includeKnowledge: boolean) => {
+  if (isSupabase) return sb.getSidebarStats(s, includeKnowledge);
+  const leads = s.member.role === "accountant" ? [] : mock.listLeads(s);
+  const q = includeKnowledge ? mock.getQuestionnaire() : null;
+  return Promise.resolve({
+    newUnassignedLeads: leads.filter((l) => l.status === "new" && !l.assigneeId).length,
+    unansweredCount: q?.unanswered.length ?? 0,
+    kbLow: !!q && q.draft.completeness < 50,
+  });
+};
 
 export type OverviewData = Awaited<ReturnType<typeof sb.getOverview>>;
 export const getOverview = async (s: Session): Promise<OverviewData> => {
