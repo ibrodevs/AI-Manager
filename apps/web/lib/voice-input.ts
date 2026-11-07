@@ -89,8 +89,11 @@ export function prepareSpeech(text: string, expectingPhone: boolean): PreparedSp
   }
   const candidate = phoneCandidate(phrase);
   const digits = candidate?.digits ?? "";
+  // A partially spoken +996 country code must not be accepted as an
+  // unrelated valid nine-digit local number (+996 996 ...).
+  const incompleteCountryCode = digits.startsWith("996") && digits.length !== 12;
   const international = (digits.startsWith("996") && digits.length === 12) || (digits.startsWith("7") && digits.length === 11);
-  const phone = digits ? toE164(international ? "+" + digits : digits) : null;
+  const phone = digits && !incompleteCountryCode ? toE164(international ? "+" + digits : digits) : null;
   if (!phone) return { ready: false, text: phrase, collectingPhone: true };
   const normalized = phrase.slice(0, candidate!.start) + phone + phrase.slice(candidate!.end);
   return { ready: true, text: normalized, phone, collectingPhone: false };
