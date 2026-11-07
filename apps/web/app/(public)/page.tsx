@@ -1,30 +1,13 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Check, Car, Stethoscope, Scissors, Smile, Hospital, ArrowRight } from "lucide-react";
-import type { CallTurn } from "@all/db";
+import { DEMO_RECORDINGS } from "@/lib/demo-recordings";
 import { SiteNav, StatusBanner, SiteFooter } from "@/components/public/site-chrome";
 import { BrowserCallButton, DemoRecording } from "@/components/public/demo-widgets";
 import { getPlans } from "@/lib/data/queries";
 import { formatMoney } from "@/lib/format";
 
 export const metadata = { title: "ALL-менеджер — AI-администратор для звонков", description: "AI отвечает на звонки как живой человек: консультирует, записывает, передаёт сложное команде." };
-
-const DEMO_NUMBER = "+996 312 900 900";
-
-function turns(lines: [CallTurn["speaker"], string][]): CallTurn[] {
-  let ms = 300;
-  return lines.map(([speaker, text], seq) => {
-    const d = Math.max(1100, text.length * 60);
-    const t = { seq, speaker, startMs: ms, endMs: ms + d, text, interrupted: false, latencyMs: speaker === "ai" ? 560 + ((seq * 97) % 300) : undefined };
-    ms += d + 450;
-    return t;
-  });
-}
-
-const RECORDINGS = [
-  { title: "Запись на замену масла", role: "Автосервис", turns: turns([["ai", "Здравствуйте! Автосервис «Мотор», я Айгуль, виртуальный помощник. Чем помочь?"], ["caller", "Сколько у вас стоит поменять масло?"], ["ai", "Замена масла — полторы тысячи сом, около получаса. Записать вас?"], ["caller", "Давайте на субботу утром."], ["ai", "Есть суббота в 10 и в 11. Как удобнее?"], ["caller", "В одиннадцать."], ["ai", "Записала на субботу, 11:00. Как к вам обращаться?"]]) },
-  { title: "Клиника: перевод к врачу", role: "Клиника", turns: turns([["ai", "Клиника «Здоровье», я Алина, виртуальный ассистент. Слушаю вас."], ["caller", "У ребёнка температура тридцать девять, что делать?"], ["ai", "Это лучше обсудить с врачом. Сейчас переведу вас на дежурного педиатра."], ["caller", "Хорошо, спасибо."]]) },
-];
 
 export default async function Landing() {
   const t = await getTranslations("landing");
@@ -47,8 +30,7 @@ export default async function Landing() {
             <h1 className="font-display text-[44px] font-medium leading-[1] tracking-[-0.035em] text-white sm:text-[60px] lg:text-[72px]">{t("heroTitle")}</h1>
             <p className="max-w-xl text-[18px] leading-[1.5] text-white/85">{t("heroSub")}</p>
             <div className="flex flex-col gap-3">
-              <p className="text-[13px] uppercase tracking-[0.08em] text-white/70">{t("demoNumber")}</p>
-              <a href={`tel:${DEMO_NUMBER.replace(/\s/g, "")}`} className="font-display text-[40px] font-medium leading-none tracking-[-0.035em] text-white hover:opacity-90">{DEMO_NUMBER}</a>
+              <p className="text-[13px] text-white/70">{t("browserDemoNotice")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <BrowserCallButton label={t("callBrowser")} className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-medium text-[#161616] hover:bg-white/90" />
                 <Link href="/signup" className="inline-flex h-11 items-center gap-2 rounded-full border border-white/30 px-5 text-[15px] text-white/90 hover:bg-white/10">{t("nav.cta")}<ArrowRight className="size-4" /></Link>
@@ -74,9 +56,11 @@ export default async function Landing() {
           {roles.map(({ k, i: Icon }) => <span key={k} className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-white/15 px-3 text-[14px] text-[#b2b2b2]"><Icon className="size-4" />{k}</span>)}
         </div>
         <h3 className="mt-16 font-display text-[24px] font-medium tracking-[-0.01em]">{t("recordingsTitle")}</h3>
+        <p className="mt-3 max-w-3xl text-[16px] text-[#c2c2c2]">{t("recordingsSub")}</p>
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {RECORDINGS.map((r) => <DemoRecording key={r.title} {...r} />)}
+          {DEMO_RECORDINGS.map((recording) => <DemoRecording key={recording.id} recording={recording} />)}
         </div>
+        <BrowserCallButton label={t("tryAi")} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-5 text-sm hover:bg-white/10 focus-visible:outline-2" />
       </section>
 
       {/* Dusk Violet — единственный хроматический акцент, полосой */}

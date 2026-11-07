@@ -1,1 +1,20 @@
-{}
+{
+  "calls": {
+    "audioUnavailable": "Audio recording unavailable",
+    "audioLoadError": "Could not load audio. Try refreshing the page.",
+    "audioPlayError": "Could not start audio. Press Play to try again."
+  },
+  "landing": {
+    "recordingsTitle": "Listen to AI talking with your customers",
+    "recordingsSub": "Two lifelike scenarios: consultation, collecting a request, and handing information to an administrator",
+    "aiManager": "AI manager",
+    "demoClient": "Customer",
+    "replay": "Listen again",
+    "simulationDisclosure": "Demo simulation · voices generated with ElevenLabs",
+    "simulationPending": "Demo script · audio recording is not yet available",
+    "simulationNoCrm": "This simulation does not create CRM leads or confirm appointments.",
+    "tryAi": "Try AI yourself",
+    "browserDemoNotice": "Try the browser scenario. The demo telephone line is not connected yet.",
+    "browserDemoDisclosure": "Scripted text demo · no LLM or CRM writes. Browser speech is used when supported."
+  }
+}

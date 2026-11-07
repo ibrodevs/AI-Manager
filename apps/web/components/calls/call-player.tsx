@@ -7,64 +7,36 @@ import { cn } from "@all/ui";
 import { formatMs } from "@/lib/format";
 import { isTyping } from "@/lib/use-hotkeys";
 
-/**
- * Плеер звонка: волна (реплики AI и клиента разным цветом), скорость 1–2×, ±10 с, Space.
- * Если записи нет в хранилище (демо-данные), воспроизведение идёт по таймкодам расшифровки.
- */
-export function useCallPlayback(durationMs: number, audioUrl?: string) {
-  const [pos, setPos] = React.useState(0);
-  const [playing, setPlaying] = React.useState(false);
-  const [rate, setRate] = React.useState(1);
-  const audio = React.useRef<HTMLAudioElement | null>(null);
-  const raf = React.useRef<number>(0);
-  const last = React.useRef<number>(0);
+import { createCallPlayback, type PlaybackState } from "@/lib/call-playback";
 
+/** Audio resources and every event listener are owned by this effect. */
+export function useCallPlayback(_durationMs: number, audioUrl?: string) {
+  const [state, setState] = React.useState<PlaybackState>({ pos: 0, playing: false, rate: 1, durationMs: 0, status: audioUrl ? "loading" : "unavailable", error: null });
+  const controller = React.useRef<ReturnType<typeof createCallPlayback> | null>(null);
   React.useEffect(() => {
-    if (!audioUrl) return;
-    const a = new Audio(audioUrl);
-    audio.current = a;
-    const onTime = () => setPos(a.currentTime * 1000);
-    a.addEventListener("timeupdate", onTime);
-    a.addEventListener("ended", () => setPlaying(false));
-    return () => { a.pause(); a.removeEventListener("timeupdate", onTime); };
+    const playback = createCallPlayback(audioUrl ? new Audio(audioUrl) : null);
+    controller.current = playback;
+    const sync = () => setState(playback.snapshot());
+    const unsubscribe = playback.subscribe(sync);
+    sync();
+    return () => { unsubscribe(); playback.dispose(); controller.current = null; };
   }, [audioUrl]);
-
-  React.useEffect(() => {
-    if (audio.current) { audio.current.playbackRate = rate; if (playing) void audio.current.play(); else audio.current.pause(); return; }
-    if (!playing) return;
-    last.current = performance.now();
-    const tick = (now: number) => {
-      const dt = (now - last.current) * rate;
-      last.current = now;
-      setPos((p) => {
-        const n = p + dt;
-        if (n >= durationMs) { setPlaying(false); return durationMs; }
-        return n;
-      });
-      raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
-  }, [playing, rate, durationMs]);
-
-  const seek = React.useCallback((ms: number) => {
-    const v = Math.max(0, Math.min(durationMs, ms));
-    setPos(v);
-    if (audio.current) audio.current.currentTime = v / 1000;
-  }, [durationMs]);
-
-  return { pos, playing, setPlaying, rate, setRate, seek };
+  const setPlaying = React.useCallback((playing: boolean) => { void controller.current?.setPlaying(playing); }, []);
+  const seek = React.useCallback((ms: number) => controller.current?.seek(ms), []);
+  const setRate = React.useCallback((rate: number) => controller.current?.setRate(rate), []);
+  return { ...state, setPlaying, seek, setRate };
 }
 
 export type Playback = ReturnType<typeof useCallPlayback>;
 
-export function CallPlayer({ turns, durationMs, pb, compact }: { turns: CallTurn[]; durationMs: number; pb: Playback; compact?: boolean }) {
+export function CallPlayer({ turns, pb, compact }: { turns: CallTurn[]; durationMs: number; pb: Playback; compact?: boolean }) {
   const t = useTranslations("calls");
+  const durationMs = pb.durationMs;
   // Space — пауза, ←/→ — 10 секунд
   React.useEffect(() => {
     if (compact) return;
     const onKey = (e: KeyboardEvent) => {
-      if (isTyping(e.target) || e.metaKey || e.ctrlKey) return;
+      if (isTyping(e.target) || e.metaKey || e.ctrlKey || (e.target instanceof Element && e.target.closest("button, input, [role=slider]"))) return;
       if (e.code === "Space") { e.preventDefault(); pb.setPlaying(!pb.playing); }
       if (e.key === "ArrowLeft") { e.preventDefault(); pb.seek(pb.pos - 10_000); }
       if (e.key === "ArrowRight") { e.preventDefault(); pb.seek(pb.pos + 10_000); }
@@ -77,31 +49,38 @@ export function CallPlayer({ turns, durationMs, pb, compact }: { turns: CallTurn
   const progress = durationMs ? pb.pos / durationMs : 0;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2" data-playback-status={pb.status}>
+      <div className="flex items-center gap-2">
       {!compact && (
         <button type="button" onClick={() => pb.seek(pb.pos - 10_000)} aria-label={t("back10")} className="inline-flex size-7 items-center justify-center rounded-full text-fg-muted hover:bg-hover hover:text-fg"><RotateCcw className="size-3.5" /></button>
       )}
-      <button type="button" onClick={() => pb.setPlaying(!pb.playing)} aria-label={pb.playing ? t("pause") : t("play")}
-        className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg hover:bg-accent-hover">
+      <button type="button" disabled={pb.status === "unavailable" || pb.status === "error"} onClick={() => pb.setPlaying(!pb.playing)} aria-label={pb.playing ? t("pause") : t("play")}
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-4">
         {pb.playing ? <Pause className="size-3.5" /> : <Play className="ml-0.5 size-3.5" />}
       </button>
       {!compact && (
         <button type="button" onClick={() => pb.seek(pb.pos + 10_000)} aria-label={t("fwd10")} className="inline-flex size-7 items-center justify-center rounded-full text-fg-muted hover:bg-hover hover:text-fg"><RotateCw className="size-3.5" /></button>
       )}
-      <div className="relative h-8 min-w-0 flex-1 cursor-pointer" role="slider" aria-label="Позиция" aria-valuemin={0} aria-valuemax={durationMs} aria-valuenow={Math.round(pb.pos)} tabIndex={0}
+      <div className="relative h-8 min-w-0 flex-1 cursor-pointer" role="slider" aria-label="Позиция" aria-valuemin={0} aria-valuemax={durationMs} aria-valuenow={Math.round(pb.pos)} aria-valuetext={`${formatMs(pb.pos)} / ${formatMs(durationMs)}`} aria-disabled={pb.status !== "ready"} tabIndex={0}
+        onKeyDown={(e) => {
+          const target = e.key === "Home" ? 0 : e.key === "End" ? durationMs : e.key === "ArrowLeft" ? pb.pos - 5000 : e.key === "ArrowRight" ? pb.pos + 5000 : null;
+          if (target !== null) { e.preventDefault(); e.stopPropagation(); pb.seek(target); }
+        }}
         onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); pb.seek(((e.clientX - r.left) / r.width) * durationMs); }}>
         <div className="absolute inset-0 flex items-center gap-px">
           {bars.map((b, i) => (
-            <span key={i} className={cn("flex-1 rounded-full", b.speaker === "ai" ? "bg-fg" : b.speaker === "operator" ? "bg-warning" : b.speaker === "caller" ? "bg-fg-faint" : "bg-line-strong",
+            <span key={i} className={cn("flex-1 rounded-full", b.speaker === "ai" ? "bg-violet-400" : b.speaker === "operator" ? "bg-warning" : b.speaker === "caller" ? "bg-teal-400" : "bg-line-strong",
               i / bars.length > progress && "opacity-35")} style={{ height: `${Math.round(Math.max(8, b.h * 100))}%` }} />
           ))}
         </div>
       </div>
       <span className="w-[76px] shrink-0 text-right text-xs tabular-nums text-fg-muted">{formatMs(pb.pos)} / {formatMs(durationMs)}</span>
-      {!compact && (
+      {(
         <button type="button" onClick={() => pb.setRate(pb.rate >= 2 ? 1 : pb.rate + 0.25)} aria-label={t("speed")}
           className="h-6 w-11 rounded-full border border-line text-xs tabular-nums text-fg-muted hover:text-fg">{pb.rate}×</button>
       )}
+      </div>
+      {(pb.status === "unavailable" || pb.status === "error" || pb.error) && <p role="status" className="text-xs text-fg-muted">{pb.status === "unavailable" ? t("audioUnavailable") : pb.error === "load" ? t("audioLoadError") : t("audioPlayError")}</p>}
     </div>
   );
 }
@@ -124,12 +103,12 @@ export function Transcript({ turns, pb, className }: { turns: CallTurn[]; pb: Pl
   const te = useTranslations("enums.speaker");
   const [q, setQ] = React.useState("");
   const listRef = React.useRef<HTMLOListElement>(null);
-  const current = turns.findIndex((x) => pb.pos >= x.startMs && pb.pos <= x.endMs + 400);
+  const current = turns.findIndex((x) => pb.pos >= x.startMs && pb.pos < x.endMs);
 
   React.useEffect(() => {
     if (current < 0 || !pb.playing) return;
-    listRef.current?.querySelector<HTMLElement>(`[data-seq="${current}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [current, pb.playing]);
+    listRef.current?.querySelector<HTMLElement>(`[data-seq="${turns[current]?.seq}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [current, pb.playing, turns]);
 
   const hl = (text: string) => {
     if (!q.trim()) return text;
@@ -149,11 +128,11 @@ export function Transcript({ turns, pb, className }: { turns: CallTurn[]; pb: Pl
       <ol ref={listRef} className="flex flex-col gap-0.5">
         {visible.map((x) => (
           <li key={x.seq} data-seq={x.seq}>
-            <button type="button" onClick={() => { pb.seek(x.startMs); }}
+            <button type="button" onClick={() => { pb.seek(x.startMs); }} aria-current={x.seq === turns[current]?.seq ? "true" : undefined}
               className={cn("grid w-full grid-cols-[44px_64px_1fr] gap-2 rounded-md px-1.5 py-1 text-left text-[13px] leading-5 hover:bg-hover",
-                x.seq === current && "bg-selected")}>
+                x.seq === turns[current]?.seq && "bg-selected")}>
               <span className="text-xs tabular-nums text-fg-faint">{formatMs(x.startMs)}</span>
-              <span className={cn("text-xs", x.speaker === "ai" ? "text-fg font-medium" : x.speaker === "operator" ? "text-warning" : "text-fg-muted")}>{te(x.speaker)}</span>
+              <span className={cn("text-xs", x.speaker === "ai" ? "text-violet-300 font-medium" : x.speaker === "operator" ? "text-warning" : "text-teal-300")}>{te(x.speaker)}</span>
               <span className="min-w-0">
                 {hl(x.text)}
                 {x.interrupted && <span className="ml-1.5 rounded-full bg-warning-bg px-1.5 text-[10px] text-warning">{t("interrupted")}</span>}
