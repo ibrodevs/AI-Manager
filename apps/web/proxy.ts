@@ -38,9 +38,11 @@ export async function proxy(req: NextRequest) {
       },
     },
   });
-  // getUser проверяет токен на сервере Auth и при необходимости обновляет его
-  const { data } = await sb.auth.getUser();
-  if (!data.user && isProtected(path)) {
+  // Проверяем подпись JWT и при необходимости обновляем cookies. В отличие от
+  // getUser(), getClaims() не делает обязательный сетевой Auth-запрос на
+  // каждый переход при асимметричных ключах Supabase.
+  const { data, error } = await sb.auth.getClaims();
+  if ((error || !data?.claims?.sub) && isProtected(path)) {
     const redirect = toLogin(req);
     for (const c of res.cookies.getAll()) redirect.cookies.set(c);
     return redirect;
@@ -49,6 +51,7 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Все страницы, кроме статики и картинок: сессия обновляется и на публичных страницах (например, /login)
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // Обновление auth cookies нужно на защищённых маршрутах и API, а не
+  // на лендинге, статических MP3 и прочих публичных ресурсах.
+  matcher: ["/app/:path*", "/admin/:path*", "/onboarding/:path*", "/api/:path*"],
 };
