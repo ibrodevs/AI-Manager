@@ -58,14 +58,33 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
   const end = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [turns, interim, phase]);
 
+  const setCallPhase = React.useCallback((next: Phase) => {
+    phaseRef.current = next;
+    setPhase(next);
+  }, []);
+
+  const clearSpeechTimer = React.useCallback(() => {
+    if (speechTimer.current) clearTimeout(speechTimer.current);
+    speechTimer.current = null;
+  }, []);
+  const clearVoiceBuffer = React.useCallback(() => {
+    clearSpeechTimer();
+    speechBuffer.current = "";
+    setInterim("");
+    setPhonePending(false);
+  }, [clearSpeechTimer]);
   const pauseMic = () => { try { rec.current?.abort(); } catch { /* уже остановлен */ } };
   const resumeMic = React.useCallback(() => {
-    if (!voiceOn.current || !rec.current) return;
-    try { rec.current.start(); setMic("listening"); } catch { /* уже запущен */ }
+    if (!voiceOn.current || !rec.current || busy.current || phaseRef.current !== "idle") return;
+    try { rec.current.start(); setMic("listening"); } catch { /* already listening */ }
   }, []);
 
   const speak = React.useCallback((text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window) || !voiceOn.current) { setPhase("idle"); resumeMic(); return; }
+    if (typeof window === "undefined" || !("speechSynthesis" in window) || !voiceOn.current) {
+      setCallPhase("idle"); resumeMic(); return;
+    }
+    // An onend from cancel() must never reopen the mic over new AI speech.
+    const generation = ++speechKey.current;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "ru-RU";
@@ -73,46 +92,80 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
     const ru = window.speechSynthesis.getVoices().find((v) => v.lang.startsWith("ru"));
     if (ru) u.voice = ru;
     pauseMic();
-    setPhase("speaking");
-    const done = () => { setPhase("idle"); resumeMic(); };
+    setCallPhase("speaking");
+    const done = () => {
+      if (generation !== speechKey.current || !voiceOn.current) return;
+      setCallPhase("idle"); resumeMic();
+    };
     u.onend = done;
     u.onerror = done;
     window.speechSynthesis.speak(u);
-  }, [voiceRate, resumeMic]);
+  }, [voiceRate, resumeMic, setCallPhase]);
 
   const reply = React.useCallback(async (text: string, channel: "voice" | "chat") => {
     if (busy.current || !text.trim()) return;
+    const currentSession = sessionKey.current;
     busy.current = true;
+    clearVoiceBuffer();
     pauseMic();
     setTurns((ts) => [...ts, { speaker: "caller", text }]);
-    setPhase("thinking");
+    setCallPhase("thinking");
     const t0 = performance.now();
     try {
       const r = await send({ conversationId: conv.current, message: text, channel });
+      // A stopped/restarted call must ignore late server responses.
+      if (currentSession !== sessionKey.current) return;
       const latency = Math.round(performance.now() - t0);
       if (!r.ok) {
         setTurns((ts) => [...ts, { speaker: "ai", text: r.error, error: true }]);
-        setPhase("idle"); resumeMic();
+        setCallPhase("idle");
+        resumeMic();
         return;
       }
       const d = r.data!;
       conv.current = d.conversationId;
+      expectingPhone.current = expectsPhoneFromAssistant(d.text);
       setLastEngine({ engine: d.engine, model: d.model, mock: d.mock });
       setTurns((ts) => [...ts, { speaker: "ai", text: d.text, latencyMs: latency, tools: d.tools, lead: d.lead, engine: d.engine }]);
-      if (voiceOn.current) speak(d.text); else setPhase("idle");
+      if (voiceOn.current) speak(d.text); else setCallPhase("idle");
     } catch {
+      if (currentSession !== sessionKey.current) return;
       setTurns((ts) => [...ts, { speaker: "ai", text: "Сеть недоступна. Проверьте подключение и повторите.", error: true }]);
-      setPhase("idle"); resumeMic();
+      setCallPhase("idle"); resumeMic();
     } finally {
-      busy.current = false;
+      if (currentSession === sessionKey.current) busy.current = false;
     }
-  }, [speak, resumeMic, send]);
+  }, [speak, resumeMic, send, setCallPhase, clearVoiceBuffer]);
+
+  // SpeechRecognition often finalizes "+996", "700", "123", "456" separately.
+  // Accumulate all fragments, wait for silence, and send only after a valid phone.
+  const flushVoiceBuffer = React.useCallback(() => {
+    speechTimer.current = null;
+    if (!voiceOn.current || busy.current || phaseRef.current !== "idle") return;
+    const prepared = prepareSpeech(speechBuffer.current, expectingPhone.current);
+    if (!prepared.text) return;
+    if (!prepared.ready) {
+      // No number is lost on pauses. Further recognition results append here.
+      setPhonePending(true);
+      setInterim(prepared.text);
+      return;
+    }
+    clearVoiceBuffer();
+    void reply(prepared.text, "voice");
+  }, [clearVoiceBuffer, reply]);
+
+  const scheduleSpeech = React.useCallback(() => {
+    clearSpeechTimer();
+    if (!speechBuffer.current.trim()) return;
+    setPhonePending(false);
+    const phone = isPhoneDictation(speechBuffer.current, expectingPhone.current);
+    speechTimer.current = setTimeout(flushVoiceBuffer, phone ? PHONE_SPEECH_PAUSE_MS : NORMAL_SPEECH_PAUSE_MS);
+  }, [clearSpeechTimer, flushVoiceBuffer]);
 
   const startRecognition = React.useCallback(async () => {
     const W = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
     const Ctor = W.SpeechRecognition ?? W.webkitSpeechRecognition;
     if (!Ctor) { setMic("unsupported"); return false; }
-    // Явный запрос доступа к микрофону — понятная ошибка, если доступ запрещён или микрофона нет
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((tr) => tr.stop());
@@ -124,50 +177,96 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
     const r = new Ctor();
     r.lang = "ru-RU"; r.continuous = true; r.interimResults = true;
     r.onresult = (e) => {
+      if (!voiceOn.current || busy.current || phaseRef.current !== "idle") return;
       let fin = "", mid = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i]!;
-        if (res.isFinal) fin += res[0]!.transcript; else mid += res[0]!.transcript;
+        if (res.isFinal) fin += " " + res[0]!.transcript;
+        else mid += " " + res[0]!.transcript;
       }
-      setInterim(mid);
-      if (fin.trim()) { setInterim(""); void reply(fin.trim(), "voice"); }
+      if (fin.trim()) speechBuffer.current = [speechBuffer.current, fin.trim()].filter(Boolean).join(" ");
+      setInterim([speechBuffer.current, mid.trim()].filter(Boolean).join(" "));
+      // Interim speech means the caller is still talking; don't send the old final.
+      clearSpeechTimer();
+      if (!mid.trim() && speechBuffer.current) scheduleSpeech();
     };
     r.onerror = (e) => {
       if (e.error === "not-allowed" || e.error === "service-not-allowed") { voiceOn.current = false; setMic("denied"); }
       else if (e.error === "audio-capture") { voiceOn.current = false; setMic("missing"); }
       else if (e.error === "network") { voiceOn.current = false; setMic("error"); }
-      // no-speech / aborted — штатно, onend перезапустит
+      // no-speech / aborted are normal, onend restarts recognition if needed.
     };
-    r.onend = () => { if (voiceOn.current && !busy.current && phaseRef.current === "idle") { try { r.start(); } catch { /* уже запущен */ } } };
+    r.onend = () => {
+      if (!voiceOn.current || busy.current || phaseRef.current !== "idle") return;
+      // On some browsers the recognizer stops after silence, not a final event.
+      if (speechBuffer.current && !speechTimer.current) scheduleSpeech();
+      if (restartTimer.current) clearTimeout(restartTimer.current);
+      restartTimer.current = setTimeout(() => {
+        restartTimer.current = null;
+        if (voiceOn.current && !busy.current && phaseRef.current === "idle" && rec.current === r) {
+          try { r.start(); setMic("listening"); } catch { /* browser may still be active */ }
+        }
+      }, 200);
+    };
     rec.current = r;
     voiceOn.current = true;
     return true;
-  }, [reply]);
+  }, [scheduleSpeech, clearSpeechTimer]);
 
   const start = React.useCallback(async (withVoice: boolean) => {
+    sessionKey.current++;
+    speechKey.current++;
+    busy.current = false;
+    expectingPhone.current = false;
+    clearVoiceBuffer();
     conv.current = undefined;
+    setLastEngine(null);
     setActive(true);
     setTurns([{ speaker: "ai", text: greeting, latencyMs: 0 }]);
     setMic("off");
+    setCallPhase("idle");
     if (withVoice && await startRecognition()) speak(greeting);
-  }, [greeting, startRecognition, speak]);
+  }, [greeting, startRecognition, speak, clearVoiceBuffer, setCallPhase]);
 
   const toggleMic = async () => {
-    if (voiceOn.current) { voiceOn.current = false; pauseMic(); window.speechSynthesis?.cancel(); setMic("off"); setPhase("idle"); return; }
+    if (voiceOn.current) {
+      voiceOn.current = false;
+      speechKey.current++;
+      clearVoiceBuffer();
+      if (restartTimer.current) clearTimeout(restartTimer.current);
+      pauseMic();
+      window.speechSynthesis?.cancel();
+      setMic("off");
+      setCallPhase("idle");
+      return;
+    }
     if (await startRecognition()) resumeMic();
   };
 
   const stop = () => {
+    sessionKey.current++;
+    speechKey.current++;
+    busy.current = false;
     voiceOn.current = false;
+    expectingPhone.current = false;
+    clearVoiceBuffer();
+    if (restartTimer.current) clearTimeout(restartTimer.current);
     setActive(false);
     pauseMic();
     rec.current = null;
     window.speechSynthesis?.cancel();
-    setInterim("");
     setMic("off");
-    setPhase("idle");
+    setCallPhase("idle");
   };
-  React.useEffect(() => () => { voiceOn.current = false; rec.current?.abort(); window.speechSynthesis?.cancel(); }, []);
+  React.useEffect(() => () => {
+    sessionKey.current++;
+    speechKey.current++;
+    voiceOn.current = false;
+    clearSpeechTimer();
+    if (restartTimer.current) clearTimeout(restartTimer.current);
+    rec.current?.abort();
+    window.speechSynthesis?.cancel();
+  }, [clearSpeechTimer]);
   React.useEffect(() => { if (autoStart) void start(false); }, [autoStart, start]);
 
   const micError = mic === "denied" ? t("micDenied") : mic === "missing" ? t("micMissing") : mic === "unsupported" ? t("sttUnsupported") : mic === "error" ? t("sttError") : null;
@@ -224,6 +323,7 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
             </li>
           ))}
           {interim && <li className="grid grid-cols-[40px_1fr] gap-2 text-[13px] italic text-fg-muted"><span className="text-xs">Вы</span><span>{interim}…</span></li>}
+          {phonePending && <li role="status" className="text-xs text-warning">Продолжайте диктовать номер — я подожду, пока вы произнесёте все цифры.</li>}
           {status && <li className="grid grid-cols-[40px_1fr] gap-2 text-xs text-fg-faint" aria-live="polite"><span />{status}</li>}
         </ol>
         {active && turns.length <= 1 && (
@@ -241,7 +341,7 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
           <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={t("testTyping")} aria-label={t("testTyping")} data-testid="chat-input"
             className="h-8 min-w-0 flex-1 rounded-full border border-line bg-bg px-3 text-[13px] focus:border-fg-muted focus:outline-none" />
           {phase === "speaking"
-            ? <Button size="icon" type="button" aria-label="Stop" onClick={() => { window.speechSynthesis?.cancel(); setPhase("idle"); resumeMic(); }}><Square /></Button>
+            ? <Button size="icon" type="button" aria-label="Stop" onClick={() => { speechKey.current++; window.speechSynthesis?.cancel(); setCallPhase("idle"); resumeMic(); }}><Square /></Button>
             : <Button size="icon" variant="primary" aria-label="Отправить" disabled={!typed.trim() || phase === "thinking"} data-testid="chat-send"><Send /></Button>}
         </form>
       )}
