@@ -19,7 +19,9 @@ jwt_expiry = 900
 enable_signup = false
 
 [auth.email]
-enable_signup = false
+# Keep email/password provider ON for provisioned accounts. Public signup is disabled by [auth].
+# Supabase CLI currently maps this flag to external_email_enabled; false breaks sign-in.
+enable_signup = true
 enable_confirmations = false
 
 [auth.hook.custom_access_token]
