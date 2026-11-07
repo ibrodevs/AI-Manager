@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Bot, Cpu, ExternalLink, Mic, MicOff, PhoneCall, PhoneOff, RotateCcw, Send, Square } from "lucide-react";
 import { Button, Tooltip, cn } from "@all/ui";
 import { assistantMessage, type AssistantReply, type Result } from "@/lib/actions";
+import { expectsPhoneFromAssistant, isPhoneDictation, prepareSpeech, NORMAL_SPEECH_PAUSE_MS, PHONE_SPEECH_PAUSE_MS } from "@/lib/voice-input";
 
 interface Turn { speaker: "ai" | "caller"; text: string; latencyMs?: number; tools?: string[]; lead?: AssistantReply["lead"]; engine?: AssistantReply["engine"]; error?: boolean }
 
@@ -37,6 +38,7 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
   const [active, setActive] = React.useState(false);
   const [turns, setTurns] = React.useState<Turn[]>([]);
   const [interim, setInterim] = React.useState("");
+  const [phonePending, setPhonePending] = React.useState(false);
   const [typed, setTyped] = React.useState("");
   const [mic, setMic] = React.useState<MicState>("off");
   const [phase, setPhase] = React.useState<Phase>("idle");
@@ -45,6 +47,12 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
   const rec = React.useRef<Recognition | null>(null);
   const voiceOn = React.useRef(false);
   const busy = React.useRef(false);
+  const sessionKey = React.useRef(0);
+  const speechKey = React.useRef(0);
+  const expectingPhone = React.useRef(false);
+  const speechBuffer = React.useRef("");
+  const speechTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restartTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const phaseRef = React.useRef<Phase>("idle");
   React.useEffect(() => { phaseRef.current = phase; }, [phase]);
   const end = React.useRef<HTMLDivElement>(null);
