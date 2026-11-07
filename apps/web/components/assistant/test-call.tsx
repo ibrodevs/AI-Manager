@@ -133,7 +133,12 @@ export function TestCall({ greeting, autoStart, voiceRate = 1, title, engine = {
       setTurns((ts) => [...ts, { speaker: "ai", text: "Сеть недоступна. Проверьте подключение и повторите.", error: true }]);
       setCallPhase("idle"); resumeMic();
     } finally {
-      if (currentSession === sessionKey.current) busy.current = false;
+      if (currentSession === sessionKey.current) {
+        busy.current = false;
+        // Resume only after releasing the busy guard; otherwise a rejected
+        // LLM request can leave the mic silently stopped for the whole call.
+        if (voiceOn.current && phaseRef.current === "idle") resumeMic();
+      }
     }
   }, [speak, resumeMic, send, setCallPhase, clearVoiceBuffer]);
 
