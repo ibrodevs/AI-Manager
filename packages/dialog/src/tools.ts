@@ -24,7 +24,7 @@ export const TOOLS: ToolSchema[] = [
   {
     name: "get_hours", phase: "0",
     description: "График работы филиала на дату с учётом праздников.",
-    parameters: { type: "object", properties: { branch: { type: "string" }, date: { type: "string", format: "date" } } },
+    parameters: { type: "object", properties: { branch: { type: "string" }, date: { type: "string", description: "ISO calendar date YYYY-MM-DD" } } },
   },
   {
     name: "create_lead", phase: "1a",
@@ -32,7 +32,7 @@ export const TOOLS: ToolSchema[] = [
     parameters: {
       type: "object",
       properties: {
-        type: { enum: ["booking", "consultation", "order", "complaint", "reschedule", "callback", "other"] },
+        type: { type: "string", enum: ["booking", "consultation", "order", "complaint", "reschedule", "callback", "other"] },
         fields: {
           type: "object",
           properties: {
@@ -41,7 +41,7 @@ export const TOOLS: ToolSchema[] = [
           },
           required: ["phone"],
         },
-        priority: { enum: ["normal", "urgent"] },
+        priority: { type: "string", enum: ["normal", "urgent"] },
       },
       required: ["type", "fields"],
     },
@@ -54,12 +54,12 @@ export const TOOLS: ToolSchema[] = [
   {
     name: "end_call", phase: "0",
     description: "Завершить звонок после прощания.",
-    parameters: { type: "object", properties: { outcome: { enum: ["lead_created", "transferred", "no_result", "consultation"] } }, required: ["outcome"] },
+    parameters: { type: "object", properties: { outcome: { type: "string", enum: ["lead_created", "transferred", "no_result", "consultation"] } }, required: ["outcome"] },
   },
   {
     name: "switch_demo_role", phase: "0",
     description: "Сменить роль демо-компании по просьбе звонящего.",
-    parameters: { type: "object", properties: { role: { enum: ["autoservice", "clinic", "salon", "dental", "polyclinic"] } }, required: ["role"] },
+    parameters: { type: "object", properties: { role: { type: "string", enum: ["autoservice", "clinic", "salon", "dental", "polyclinic"] } }, required: ["role"] },
   },
   {
     name: "send_demo_summary", phase: "0",
