@@ -3,7 +3,7 @@ import { getLocale } from "next-intl/server";
 import { AppShell } from "@/components/shell/app-shell";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { getCompany, getBranches, listLeads, getQuestionnaire, getNotifications, getMembers, MVP_DISABLED } from "@/lib/data/repo";
+import { getCompany, getBranches, getSidebarStats, getNotifications, getMembers, MVP_DISABLED } from "@/lib/data/repo";
 import { listConversations, getUsage, getCurrentPlan, getIntegrations } from "@/lib/data/queries";
 import { env, isSupabase, mockAuthAllowed } from "@/lib/env";
 
@@ -11,10 +11,11 @@ export default async function CabinetLayout({ children }: { children: React.Reac
   const s = await getSession();
   if (!s) redirect("/login");
   const role = s.member.role;
-  const [company, branches, leads, q, notifications, members, locale] = await Promise.all([
-    getCompany(s), getBranches(s), role === "accountant" ? Promise.resolve([]) : listLeads(s),
-    role === "staff" || role === "accountant" ? Promise.resolve(null) : getQuestionnaire(s),
-    getNotifications(s), getMembers(s), getLocale(),
+  // Navigation does not need the full 500-row leads list or the entire
+  // questionnaire: load only its badges and flags. Demo user switching is mock-only.
+  const [company, branches, sidebar, notifications, members, locale] = await Promise.all([
+    getCompany(s), getBranches(s), getSidebarStats(s, role !== "staff" && role !== "accountant"),
+    getNotifications(s), mockAuthAllowed ? getMembers(s) : Promise.resolve([]), getLocale(),
   ]);
   // Недоступные разделы скрыты (раздел 05); в Hackathon MVP — ещё и разделы без базы
   const hidden: string[] = isSupabase ? [...MVP_DISABLED] : [];
@@ -36,11 +37,11 @@ export default async function CabinetLayout({ children }: { children: React.Reac
       planName={usage ? getCurrentPlan().name : ""}
       counts={{
         chats: isSupabase || role === "accountant" ? 0 : listConversations(s).filter((c) => c.needsHuman && c.state !== "closed").length,
-        leads: leads.filter((l) => l.status === "new" && !l.assigneeId).length,
-        unanswered: q?.unanswered.length ?? 0,
+        leads: sidebar.newUnassignedLeads,
+        unanswered: sidebar.unansweredCount,
       }}
       notifications={notifications}
-      banners={{ limitPct: usage ? (usage.minutesUsed / usage.minutesTotal) * 100 : 0, integrationError: broken?.key, support: s.supportMode, kbLow: !!q && q.draft.completeness < 50 }}
+      banners={{ limitPct: usage ? (usage.minutesUsed / usage.minutesTotal) * 100 : 0, integrationError: broken?.key, support: s.supportMode, kbLow: sidebar.kbLow }}
       mock={mockAuthAllowed}
       mvp={isSupabase}
       demoEnv={env.DEMO_ENVIRONMENT === "1"}
