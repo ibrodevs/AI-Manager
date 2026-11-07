@@ -328,7 +328,10 @@ async function main() {
   await seedCrm(owner.id, staff.id);
   if (args.has("--with-isolation-fixture")) await seedIsolationFixture();
 
-  const pw = (p?: string) => p ?? "(не изменён — задайте DEMO_*_PASSWORD или --reset-passwords)";
+  // A public-repo Actions log must never reveal demo login passwords.
+  // Local trusted runs can still show newly generated credentials once.
+  const redacted = process.env.CI === "true" || process.env.PROVISION_REDACT_CREDENTIALS === "1";
+  const pw = (p?: string) => redacted ? "[скрыт в CI]" : p ?? "(не изменён — задайте DEMO_*_PASSWORD или --reset-passwords)";
   console.log(`\nГотово. Компания AutoCity Service: ${COMPANY}`);
   console.log(`Demo Owner: ${ownerEmail}  пароль: ${pw(owner.password)}`);
   console.log(`Demo Staff: ${staffEmail}  пароль: ${pw(staff.password)}`);
