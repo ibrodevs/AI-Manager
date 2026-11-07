@@ -6,7 +6,7 @@ const supabase = process.env.E2E_MODE === "supabase";
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: supabase ? ["mvp.spec.ts", "audio.spec.ts"] : ["cabinet.spec.ts", "phase1b.spec.ts", "audio.spec.ts"],
+  testMatch: supabase ? ["mvp.spec.ts", "audio.spec.ts", "voice-phone.spec.ts"] : ["cabinet.spec.ts", "phase1b.spec.ts", "audio.spec.ts"],
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
   // В CI ошибки попадают в аннотации GitHub (видны без доступа к логам)
