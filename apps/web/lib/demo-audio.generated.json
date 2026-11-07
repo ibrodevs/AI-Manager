@@ -1,1 +1,158 @@
-{}
+{
+  "auto-service-ru": {
+    "audioUrl": "/audio/demos/auto-service-ru.mp3",
+    "durationMs": 44591,
+    "turns": [
+      {
+        "seq": 0,
+        "speaker": "ai",
+        "startMs": 140,
+        "endMs": 6440,
+        "text": "Здравствуйте, AutoCity Сервис. Меня зовут Айгуль, я виртуальный помощник. Чем могу помочь?",
+        "interrupted": false
+      },
+      {
+        "seq": 1,
+        "speaker": "caller",
+        "startMs": 6820,
+        "endMs": 11220,
+        "text": "Здравствуйте. Подскажите, сколько стоит замена масла на Toyota Camry?",
+        "interrupted": false
+      },
+      {
+        "seq": 2,
+        "speaker": "ai",
+        "startMs": 11600,
+        "endMs": 18840,
+        "text": "Замена масла стоит тысячу пятьсот сомов. Работа занимает примерно полчаса. Хотите оставить заявку на запись?",
+        "interrupted": false
+      },
+      {
+        "seq": 3,
+        "speaker": "caller",
+        "startMs": 19180,
+        "endMs": 22840,
+        "text": "Да, было бы отлично. А можно в субботу ближе к обеду?",
+        "interrupted": false
+      },
+      {
+        "seq": 4,
+        "speaker": "ai",
+        "startMs": 23120,
+        "endMs": 30720,
+        "text": "Конечно. Передам ваше пожелание администратору. Он уточнит свободное время и подтвердит запись. Как к вам обращаться?",
+        "interrupted": false
+      },
+      {
+        "seq": 5,
+        "speaker": "caller",
+        "startMs": 31040,
+        "endMs": 34280,
+        "text": "Азамат. Я могу оставить свой номер для обратного звонка.",
+        "interrupted": false
+      },
+      {
+        "seq": 6,
+        "speaker": "ai",
+        "startMs": 34620,
+        "endMs": 42460,
+        "text": "Спасибо, Азамат. Заявка на обратный звонок принята. Администратор свяжется с вами, чтобы согласовать время. Хорошего дня.",
+        "interrupted": false
+      },
+      {
+        "seq": 7,
+        "speaker": "caller",
+        "startMs": 42820,
+        "endMs": 44320,
+        "text": "Спасибо. Очень удобно",
+        "interrupted": false
+      }
+    ],
+    "provider": "ElevenLabs",
+    "source": "user-provided",
+    "transcriptionModel": "eleven_scribe_v1",
+    "sha256": "9474d69a7e4c66d8af398989275d8a3784c690628e2ca6d34408591586a20a68"
+  },
+  "clinic-ru": {
+    "audioUrl": "/audio/demos/clinic-ru.mp3",
+    "durationMs": 38269,
+    "turns": [
+      {
+        "seq": 0,
+        "speaker": "ai",
+        "startMs": 120,
+        "endMs": 6400,
+        "text": "Здравствуйте, клиника здоровья. Меня зовут Алина. Я виртуальный администратор. Чем могу помочь?",
+        "interrupted": false
+      },
+      {
+        "seq": 1,
+        "speaker": "caller",
+        "startMs": 6780,
+        "endMs": 12560,
+        "text": "Добрый день. Я хочу записать ребенка к педиатру. Подскажите, есть время на завтра?",
+        "interrupted": false
+      },
+      {
+        "seq": 2,
+        "speaker": "ai",
+        "startMs": 12940,
+        "endMs": 17860,
+        "text": "Я помогу оставить запрос на запись. Скажите, пожалуйста, какое время вам удобнее?",
+        "interrupted": false
+      },
+      {
+        "seq": 3,
+        "speaker": "caller",
+        "startMs": 18220,
+        "endMs": 20240,
+        "text": "Желательно после трех часов дня.",
+        "interrupted": false
+      },
+      {
+        "seq": 4,
+        "speaker": "ai",
+        "startMs": 20520,
+        "endMs": 22420,
+        "text": "Поняла. Как к вам обращаться?",
+        "interrupted": false
+      },
+      {
+        "seq": 5,
+        "speaker": "caller",
+        "startMs": 22800,
+        "endMs": 23360,
+        "text": "Айпери.",
+        "interrupted": false
+      },
+      {
+        "seq": 6,
+        "speaker": "ai",
+        "startMs": 23700,
+        "endMs": 33540,
+        "text": "Спасибо, Айпери. Я передам запрос администратору, чтобы он уточнил свободное время и связался с вами для подтверждения. Пожалуйста, оставьте контактный номер.",
+        "interrupted": false
+      },
+      {
+        "seq": 7,
+        "speaker": "caller",
+        "startMs": 33800,
+        "endMs": 35060,
+        "text": "Хорошо. Спасибо.",
+        "interrupted": false
+      },
+      {
+        "seq": 8,
+        "speaker": "ai",
+        "startMs": 35360,
+        "endMs": 38040,
+        "text": "Благодарю за обращение. Хорошего вам дня.",
+        "interrupted": false
+      }
+    ],
+    "provider": "ElevenLabs",
+    "source": "user-provided",
+    "transcriptionModel": "eleven_scribe_v1",
+    "sha256": "e96f3ff9f90acfa71878194eaccb7c80cd28d6e94968d548439f2dfb5acbbee6"
+  }
+}

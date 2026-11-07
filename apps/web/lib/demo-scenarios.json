@@ -6,12 +6,10 @@
     "company": "AutoCity Service, Бишкек",
     "participants": {
       "ai": {
-        "name": "Айгуль",
-        "voiceId": "t6lBrEl93uCiLR1Lgm8v"
+        "name": "Айгуль"
       },
       "caller": {
-        "name": "Азамат",
-        "voiceId": "DhwIuljOm695yhWY4OpF"
+        "name": "Азамат"
       }
     },
     "lines": [
@@ -64,12 +62,10 @@
     "company": "Клиника «Здоровье»",
     "participants": {
       "ai": {
-        "name": "Алина",
-        "voiceId": "t6lBrEl93uCiLR1Lgm8v"
+        "name": "Алина"
       },
       "caller": {
-        "name": "Айпери",
-        "voiceId": "CH4syTkdz0MNPn6zayBd"
+        "name": "Айпери"
       }
     },
     "lines": [

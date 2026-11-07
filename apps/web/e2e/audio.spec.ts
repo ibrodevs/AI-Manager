@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import ts from "typescript";
 import type { DemoAudio } from "../lib/demo-recordings";
 const scenarios = JSON.parse(readFileSync(new URL("../lib/demo-scenarios.json", import.meta.url), "utf8")) as { id: string }[];
@@ -17,7 +18,7 @@ function tone() {
   return wav;
 }
 
-test("public demos honestly expose missing recordings and fit mobile", async ({ page }) => {
+test("public demos expose their availability and fit mobile", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
@@ -83,11 +84,15 @@ test("native decoder drives time, pause, seek, speed, exclusivity and completion
 });
 
 for (const [index, recording] of DEMO_RECORDINGS.entries()) {
-  test(`licensed public speech: ${recording.id}`, async ({ page, request }) => {
-    test.skip(!recording.audio, "Blocked: full ElevenLabs audio and commercial license are not available; this is not a passing audio acceptance test.");
+  test(`public speech: ${recording.id}`, async ({ page, request }) => {
+    test.skip(!recording.audio, "Full demo recording is not configured.");
     const audio = recording.audio!;
     const response = await request.get(audio.audioUrl);
-    expect(response.ok()).toBe(true); expect((await response.body()).byteLength).toBeGreaterThan(10000);
+    expect(response.ok()).toBe(true);
+    const bytes = await response.body();
+    expect(bytes.byteLength).toBeGreaterThan(10000);
+    expect(response.headers()["content-type"]).toContain("audio/mpeg");
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(audio.sha256);
     await page.goto("/");
     const card = page.getByTestId("demo-recording").nth(index);
     const slider = card.getByRole("slider");
@@ -95,9 +100,40 @@ for (const [index, recording] of DEMO_RECORDINGS.entries()) {
     await expect.poll(async () => Number(await slider.getAttribute("aria-valuenow"))).toBeGreaterThan(100);
     await card.getByRole("button", { name: "Пауза", exact: true }).click();
     await card.locator('[data-seq="1"] button').click();
-    await expect(slider).toHaveAttribute("aria-valuenow", String(audio.turns[1]!.startMs));
+    await expect.poll(async () => Math.abs(Number(await slider.getAttribute("aria-valuenow")) - audio.turns[1]!.startMs)).toBeLessThan(20);
     await expect(card.locator('[data-seq="1"] button')).toHaveAttribute("aria-current", "true");
     await slider.focus(); await page.keyboard.press("Home");
     await expect(slider).toHaveAttribute("aria-valuenow", "0");
+    const duration = Number(await slider.getAttribute("aria-valuemax"));
+    expect(Math.abs(duration - audio.durationMs)).toBeLessThan(200);
+    const bounds = await slider.boundingBox();
+    await slider.click({ position: { x: bounds!.width / 2, y: bounds!.height / 2 } });
+    await expect.poll(async () => Math.abs(Number(await slider.getAttribute("aria-valuenow")) - duration / 2)).toBeLessThan(100);
+    await card.getByRole("button", { name: "Скорость", exact: true }).click();
+    await expect(card.getByRole("button", { name: "Скорость", exact: true })).toHaveText("1.25×");
+    await slider.focus(); await page.keyboard.press("End"); await page.keyboard.press("ArrowLeft");
+    await card.getByRole("button", { name: "Воспроизвести", exact: true }).click();
+    await expect(card.getByRole("button", { name: "Пауза", exact: true })).toBeVisible();
+    await expect(card.getByRole("button", { name: "Воспроизвести", exact: true })).toBeVisible({ timeout: 10000 });
+    await card.getByRole("button", { name: "Послушать ещё раз", exact: true }).click();
+    await expect(card.getByRole("button", { name: "Пауза", exact: true })).toBeVisible();
+    expect(Number(await slider.getAttribute("aria-valuenow"))).toBeLessThan(2000);
+    const other = page.getByTestId("demo-recording").nth(1 - index);
+    await other.getByRole("button", { name: "Воспроизвести", exact: true }).click();
+    await expect(other.getByRole("button", { name: "Пауза", exact: true })).toBeVisible();
+    await expect(card.getByRole("button", { name: "Воспроизвести", exact: true })).toBeVisible();
   });
 }
+
+test("failed MP3 load cannot advance the public player", async ({ page }) => {
+  const recording = DEMO_RECORDINGS.find((x) => x.audio);
+  test.skip(!recording, "No recording configured");
+  await page.route(`**${recording!.audio!.audioUrl}`, (route) => route.fulfill({ status: 404, body: "missing" }));
+  await page.goto("/");
+  const card = page.getByTestId("demo-recording").nth(DEMO_RECORDINGS.indexOf(recording!));
+  await expect(card.getByRole("status")).toContainText("Не удалось загрузить аудиозапись");
+  await expect(card.getByRole("button", { name: "Воспроизвести", exact: true })).toBeDisabled();
+  await card.getByRole("slider").focus(); await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(350);
+  await expect(card.getByRole("slider")).toHaveAttribute("aria-valuenow", "0");
+});

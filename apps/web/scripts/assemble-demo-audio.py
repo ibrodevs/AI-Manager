@@ -6,6 +6,7 @@ Regenerate all free-plan takes on a paid plan before using this command.
 """
 import argparse
 import datetime
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -53,7 +54,7 @@ def assemble(source, reviewed, commercial):
             run("ffmpeg", "-y", "-i", str(raw), "-af", "loudnorm=I=-18:TP=-2:LRA=7", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "128k", str(mp3))
             # Native playback uses actual MP3 metadata, including encoder padding.
             duration = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", str(mp3)], text=True)
-            manifest[scenario["id"]] = {"audioUrl": f'/audio/demos/{mp3.name}', "durationMs": round(float(duration) * 1000), "turns": turns, "provider": "ElevenLabs", "model": "eleven_v3", "assembledAt": datetime.datetime.now(datetime.timezone.utc).isoformat(), "commercialLicense": True}
+            manifest[scenario["id"]] = {"audioUrl": f'/audio/demos/{mp3.name}', "sha256": hashlib.sha256(mp3.read_bytes()).hexdigest(), "durationMs": round(float(duration) * 1000), "turns": turns, "provider": "ElevenLabs", "model": "eleven_v3", "assembledAt": datetime.datetime.now(datetime.timezone.utc).isoformat(), "commercialLicense": True}
         output = root / "public/audio/demos"
         output.mkdir(parents=True, exist_ok=True)
         for scenario in scenarios:
