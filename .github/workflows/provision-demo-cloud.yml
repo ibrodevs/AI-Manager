@@ -1,0 +1,125 @@
+name: Provision AutoCity Cloud Demo (protected)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/provision-demo-cloud.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: protected-autocity-cloud-provision
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    if: github.repository == 'ibrodevs/AI-Manager' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: "true"
+      PROVISION_REDACT_CREDENTIALS: "1"
+      SUPABASE_URL: "https://tcamftkypegobfmwhuad.supabase.co"
+      APP_URL: "https://all-manager.vercel.app"
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Validate required protected GitHub secrets
+        env:
+          SERVICE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OWNER_PASSWORD: ${{ secrets.DEMO_OWNER_PASSWORD }}
+          STAFF_PASSWORD: ${{ secrets.DEMO_STAFF_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "$SERVICE" ]] || missing+=(SUPABASE_SERVICE_ROLE_KEY)
+          [[ -n "$OWNER_PASSWORD" ]] || missing+=(DEMO_OWNER_PASSWORD)
+          [[ -n "$STAFF_PASSWORD" ]] || missing+=(DEMO_STAFF_PASSWORD)
+          if (( ${#missing[@]} )); then
+            printf '::error::Missing protected repository secrets: %s\n' "${missing[*]}"
+            exit 1
+          fi
+          if [[ ${#OWNER_PASSWORD} -lt 14 || ${#STAFF_PASSWORD} -lt 14 || "$OWNER_PASSWORD" == "$STAFF_PASSWORD" ]]; then
+            echo "::error::Demo passwords must be distinct and at least 14 characters long."
+            exit 1
+          fi
+          echo "Required secrets are configured; values are never printed."
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Provision company and accounts (no credentials in logs)
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEMO_OWNER_PASSWORD: ${{ secrets.DEMO_OWNER_PASSWORD }}
+          DEMO_STAFF_PASSWORD: ${{ secrets.DEMO_STAFF_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Never stream script stdout/stderr to a public-repo Actions log.
+          if ! pnpm --filter @all/web provision:demo > "$RUNNER_TEMP/provision-demo-private.log" 2>&1; then
+            echo "::error::Provisioning failed; private log intentionally withheld (contains potentially sensitive data)."
+            exit 1
+          fi
+          echo "Provisioning command completed; sensitive output withheld."
+
+      - name: Verify cloud users, ownership, knowledge and CRM
+        working-directory: apps/web
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import { createClient } from "@supabase/supabase-js";
+
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+          const checked = (result, label) => {
+            if (result.error) throw new Error(label + " verification failed: " + result.error.code);
+            return result.data;
+          };
+          const company = checked(await sb.from("companies").select("id,name").eq("name", "AutoCity Service").single(), "company");
+          assert.equal(company.name, "AutoCity Service");
+          const users = checked(await sb.auth.admin.listUsers({ page: 1, perPage: 1000 }), "auth");
+          const owner = users.users.find(u => u.email === "demo.owner@example.com");
+          const staff = users.users.find(u => u.email === "demo.staff@example.com");
+          assert.ok(owner && staff, "Both demo accounts must exist");
+          const roles = checked(await sb.from("memberships").select("user_id,role").eq("company_id", company.id), "roles");
+          assert.ok(roles.some(r => r.user_id === owner.id && r.role === "owner"), "Owner membership missing");
+          assert.ok(roles.some(r => r.user_id === staff.id && r.role === "staff"), "Staff membership missing");
+          for (const [table,minimum] of [["branches",2],["services",10],["faq",15],["contacts",20],["leads",15],["calls",10]]) {
+            const { count, error } = await sb.from(table).select("id", { count:"exact", head:true }).eq("company_id",company.id);
+            if (error) throw new Error(table + " verification failed: " + error.code);
+            assert.ok(count >= minimum, table + " expected at least " + minimum + ", received " + count);
+            console.log(table + ": " + count);
+          }
+          const { count:published, error:kbError } = await sb.from("questionnaires")
+            .select("id",{count:"exact",head:true}).eq("company_id",company.id).eq("status","published");
+          if (kbError) throw new Error("knowledge verification failed: " + kbError.code);
+          assert.ok(published >= 1, "Published knowledge base missing");
+          console.log("AutoCity Service verified: 2 demo users, owner/staff permissions, published KB and CRM seeded.");
+          NODE
+
+      - name: Clear temporary private logs
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/provision-demo-private.log"
