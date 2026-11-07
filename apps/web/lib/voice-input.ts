@@ -30,7 +30,7 @@ const NUMBER_WORDS: Record<string, { value: number; rank: number }> = {
 
 // Only interpret digits as *the caller's* number when they volunteer one.
  // "Подскажите номер вашего автосервиса" is an ordinary question, not a phone entry.
-const PHONE_WORD_RE = /(?:мой|моя|это|оставляю|продиктую|диктую)\s+(?:контактный\\s+)?(?:номер|телефон)|(?:номер|телефон)\\s*(?:\\+?\\d|плюс\\s+)/i;
+const PHONE_WORD_RE = /(?:мой|моя|это|оставляю|продиктую|диктую)\s+(?:контактный\s+)?(?:номер|телефон)|(?:номер|телефон)\s*(?:\+?\d|плюс\s+)/i;
 const PHONE_REQUEST_RE = /телефон|номер\s+(?:для\s+связи|телефона)|(?:назовите|подскажите|оставьте|продиктуйте)\s+(?:свой\s+)?номер/i;
 
 export function expectsPhoneFromAssistant(reply: string): boolean {
