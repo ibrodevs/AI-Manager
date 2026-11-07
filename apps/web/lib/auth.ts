@@ -28,22 +28,26 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const store = await cookies();
   if (env.DATA_SOURCE === "supabase") {
     const sb = await createServerSupabase();
-    const { data } = await sb.auth.getUser();
-    if (!data.user) return null;
+    // Проверяем подпись JWT без обязательного обращения к Auth API на каждом
+    // серверном рендере. Membership/RLS по-прежнему проверяются в Supabase.
+    const { data, error } = await sb.auth.getClaims();
+    if (error || !data?.claims?.sub) return null;
+    const userId = data.claims.sub;
+    const email = typeof data.claims.email === "string" ? data.claims.email : undefined;
     const { data: rows } = await sb.from("memberships")
       .select("id, user_id, company_id, role, permissions, branch_ids, transfer_phone, disabled_at, created_at")
-      .eq("user_id", data.user.id).is("disabled_at", null).order("created_at");
+      .eq("user_id", userId).is("disabled_at", null).order("created_at");
     if (!rows?.length) return null;
     const wanted = store.get("company")?.value;
     const m = rows.find((r) => r.company_id === wanted) ?? rows[0]!;
-    const { data: profile } = await sb.from("profiles").select("full_name, phone").eq("id", data.user.id).maybeSingle();
-    const name = profile?.full_name ?? (data.user.user_metadata?.full_name as string | undefined) ?? data.user.email ?? "";
+    const { data: profile } = await sb.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();
+    const name = profile?.full_name ?? email ?? "";
     return {
-      userId: data.user.id,
+      userId: userId,
       companyId: m.company_id as string,
-      email: data.user.email,
+      email: email,
       member: {
-        id: m.id as string, userId: m.user_id as string, name, email: data.user.email, phone: profile?.phone ?? undefined,
+        id: m.id as string, userId: m.user_id as string, name, email: email, phone: profile?.phone ?? undefined,
         role: m.role as MemberRole, permissions: (m.permissions as Member["permissions"]) ?? {}, branchIds: (m.branch_ids as string[]) ?? [],
         transferPhone: (m.transfer_phone as string | null) ?? undefined, telegramLinked: false,
       },
