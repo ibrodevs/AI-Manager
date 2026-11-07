@@ -159,6 +159,37 @@ export const getNotifications = cache(async (s: Session) => {
   return (check(await sb.from("notifications").select("*").eq("company_id", s.companyId).eq("user_id", s.userId).order("created_at", { ascending: false }).limit(50)) ?? []).map(toNotification);
 });
 
+/**
+ * Lightweight navigation badges. Avoid loading the full 500-row leads list
+ * and the entire draft/published knowledge base on unrelated pages.
+ * Queries execute under the signed-in user's JWT and existing RLS policies.
+ */
+export const getSidebarStats = cache(async (s: Session, includeKnowledge: boolean) => {
+  const sb = await client();
+  const [leads, unanswered, draft] = await Promise.all([
+    s.member.role === "accountant"
+      ? Promise.resolve(null)
+      : sb.from("leads").select("id", { count: "exact", head: true })
+          .eq("company_id", s.companyId).eq("status", "new").is("assignee_id", null),
+    includeKnowledge
+      ? sb.from("unanswered_questions").select("id", { count: "exact", head: true })
+          .eq("company_id", s.companyId).eq("resolved", false)
+      : Promise.resolve(null),
+    includeKnowledge
+      ? sb.from("questionnaires").select("completeness")
+          .eq("company_id", s.companyId).eq("status", "draft").maybeSingle()
+      : Promise.resolve(null),
+  ]);
+  if (leads?.error) throw new RepoError(leads.error.message);
+  if (unanswered?.error) throw new RepoError(unanswered.error.message);
+  if (draft?.error) throw new RepoError(draft.error.message);
+  return {
+    newUnassignedLeads: leads?.count ?? 0,
+    unansweredCount: unanswered?.count ?? 0,
+    kbLow: draft?.data?.completeness != null && draft.data.completeness < 50,
+  };
+});
+
 /** Последние действия по заявкам — для «Обзора» */
 export async function recentLeadEvents(s: Session, limit = 12) {
   const sb = await client();
