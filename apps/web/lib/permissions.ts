@@ -1,4 +1,4 @@
-import type { MemberRole, Permission } from "@all/db";
+import type { MemberRole, Permission } from "@all/types";
 
 // Матрица прав (раздел 05). Интерфейс скрывает или блокирует недоступное с пояснением.
 export type Action =

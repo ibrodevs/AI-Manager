@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Sheet, Button, EmptyState, cn } from "@all/ui";
-import type { AppNotification } from "@all/db";
+import type { AppNotification } from "@all/types";
 import { markNotificationsRead } from "@/lib/actions";
 import { relativeTime } from "@/lib/format";
 

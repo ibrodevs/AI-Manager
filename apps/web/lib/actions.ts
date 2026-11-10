@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   completeness, initialState, missingRequired, respondOffline, type DialogState, type EngineReply, demoSnapshot, detectDemoRole, DEMO_ROLE_KEYS, type DemoRole,
 } from "@all/dialog";
-import type { AiMode, Faq, Lead, MemberRole, Service, StaffMember } from "@all/db";
+import type { AiMode, Faq, Lead, MemberRole, Service, StaffMember } from "@all/types";
 import { requireSession, startMockSession, endSession, type Session } from "./auth";
 import { can, type Action } from "./permissions";
 import { toE164 } from "./format";
@@ -17,7 +17,7 @@ import { createServerSupabase } from "./supabase/server";
 import { assistantTurn, TurnError, type TurnReply } from "./ai/turn";
 
 import { djangoAction, djangoFetch, DJANGO_COOKIE, DjangoError } from "./django";
-import type { Contact, Member } from "@all/db";
+import type { Contact, Member } from "@all/types";
 
 export type Result<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; fields?: string[] };
 

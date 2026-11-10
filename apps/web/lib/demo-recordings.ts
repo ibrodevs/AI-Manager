@@ -1,4 +1,4 @@
-import type { CallTurn } from "@all/db";
+import type { CallTurn } from "@all/types";
 import scenarios from "./demo-scenarios.json";
 import assets from "./demo-audio.generated.json";
 

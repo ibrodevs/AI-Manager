@@ -1,6 +1,4 @@
-// Доменные типы, общие для web, workers и integrations.
-// Строковые литералы совпадают с check-ограничениями миграций.
-// Сгенерированные типы Supabase: `pnpm db:types` → src/database.types.ts
+// TypeScript contracts consumed by the frontend. Database models and migrations live in AI-Manager-backend.
 
 export type Uuid = string;
 export type IsoDate = string;

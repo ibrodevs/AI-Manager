@@ -1,6 +1,6 @@
 import "server-only";
 import { initialState, respondOffline } from "@all/dialog";
-import type { Attachment, ChannelType, ChatMessage, Conversation } from "@all/db";
+import type { Attachment, ChannelType, ChatMessage, Conversation } from "@all/types";
 import { db, draftSnapshot, emit, publishedSnapshot } from "./store";
 
 /**

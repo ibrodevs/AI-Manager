@@ -1,6 +1,6 @@
 "use server";
 import { z } from "zod";
-import type { Appointment, Lead, Conversation, ChatMessage, Ticket } from "@all/db";
+import type { Appointment, Lead, Conversation, ChatMessage, Ticket } from "@all/types";
 import { requireSession, type Session } from "./auth";
 import { isSupabase, isDjango } from "./env";
 import { can } from "./permissions";

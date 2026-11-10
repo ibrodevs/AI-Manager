@@ -1,4 +1,4 @@
-import type { Currency } from "@all/db";
+import type { Currency } from "@all/types";
 
 const UNIT: Record<Currency, string> = { KGS: "сом", KZT: "тенге", RUB: "₽", USD: "$" };
 

@@ -5,7 +5,7 @@ import { ThumbsDown, ThumbsUp, Flag, PhoneForwarded } from "lucide-react";
 import {
   DataTable, Dash, EmptyState, FilterBar, PageHeader, Pill, SplitView, Tooltip, type ColumnDef, type FilterDef, type SavedView, type Tone,
 } from "@all/ui";
-import type { Call, CallOutcome } from "@all/db";
+import type { Call, CallOutcome } from "@all/types";
 import { useRealtime } from "@/lib/use-realtime";
 import { useListState, matchSearch } from "@/lib/use-list-state";
 import { dayKeyInTz, formatDateTime, formatDuration, formatPhone, hourInTz, relativeTime } from "@/lib/format";

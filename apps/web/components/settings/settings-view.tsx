@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Copy, KeyRound, ShieldCheck, Trash2, Download, Lock } from "lucide-react";
 import { Button, ConfirmDialog, Field, Input, PageHeader, Pill, Select, cn, toast } from "@all/ui";
-import type { AuditEntry, Branch, Company, Member } from "@all/db";
+import type { AuditEntry, Branch, Company, Member } from "@all/types";
 import type { ApiKey, NotificationPref, PhoneNumber } from "@/lib/data/types";
 import { createApiKey, eraseByPhone, requestExport, revokeApiKey, setLocale, setNotificationPref, updateCompany } from "@/lib/actions";
 import { formatDateTime, formatPhone } from "@/lib/format";

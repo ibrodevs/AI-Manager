@@ -3,7 +3,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { RotateCw, Send, Globe, MessageCircle, Camera, Building2, CalendarDays, Sheet as SheetIcon, Webhook, Code2, Bot } from "lucide-react";
 import { Button, PageHeader, Pill, Select, Sheet, Tabs, Tooltip, cn, toast, type Tone } from "@all/ui";
-import type { Integration, IntegrationLog } from "@all/db";
+import type { Integration, IntegrationLog } from "@all/types";
 import { fetchIntegrationLogs } from "@/lib/read";
 import { retryIntegrationEvent } from "@/lib/actions";
 import { relativeTime, formatDateTime } from "@/lib/format";

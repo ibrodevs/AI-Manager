@@ -6,7 +6,7 @@ import { CalendarPlus, Check, ChevronDown, ChevronUp, Phone, X, Hand, Ban } from
 import {
   Avatar, Button, Dash, ErrorState, Menu, MenuContent, MenuItem, MenuTrigger, Pill, Popover, PopoverContent, PopoverTrigger, SectionTitle, Select, Skeleton, Textarea, Tooltip, cn, toast,
 } from "@all/ui";
-import type { Lead, LeadEvent, LeadStatus } from "@all/db";
+import type { Lead, LeadEvent, LeadStatus } from "@all/types";
 import { fetchLead } from "@/lib/read";
 import { commentLead, updateLead } from "@/lib/actions";
 import { formatDateTime, formatPhone, relativeTime } from "@/lib/format";

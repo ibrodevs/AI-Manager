@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Check, Download, Loader2, Percent, Plus, Trash2, Upload } from "lucide-react";
 import { Button, Field, Input, PageHeader, Popover, PopoverContent, PopoverTrigger, Select, Sheet, Tabs, toast } from "@all/ui";
-import type { Faq, Service, StaffMember, Weekday } from "@all/db";
+import type { Faq, Service, StaffMember, Weekday } from "@all/types";
 import { bulkPrice, deleteRows, upsertFaq, upsertServices, upsertStaff } from "@/lib/actions";
 import { SheetGrid, type GridColumn, type GridRow } from "./sheet-grid";
 

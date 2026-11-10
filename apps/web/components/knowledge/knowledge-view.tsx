@@ -8,7 +8,7 @@ import {
   Button, ConfirmDialog, Field, Input, Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger, Pill, Select, Sheet, Textarea, Tooltip, cn, toast,
 } from "@all/ui";
 import { BLOCKS, blockProgress, completeness, missingRequired, type BlockDef, type FieldDef, type FieldValues } from "@all/dialog";
-import type { Faq, Service, UnansweredQuestion, Weekday } from "@all/db";
+import type { Faq, Service, UnansweredQuestion, Weekday } from "@all/types";
 import { answerUnanswered, publishQuestionnaire, rollbackQuestionnaire, setField } from "@/lib/actions";
 import type { QuestionnaireState } from "@/lib/data/types";
 import { relativeTime } from "@/lib/format";

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronUp, Phone, Plus, ThumbsDown, ThumbsUp, X, BookPlus, Search, FilePlus2, PhoneForwarded, PhoneOff, Database } from "lucide-react";
 import { Button, Dash, DescList, ErrorState, Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Pill, SectionTitle, Skeleton, cn, toast } from "@all/ui";
-import type { CallDetail } from "@all/db";
+import type { CallDetail } from "@all/types";
 import { fetchCall } from "@/lib/read";
 import { rateCall } from "@/lib/actions";
 import { formatDateTime, formatDuration, formatMs, formatPhone } from "@/lib/format";

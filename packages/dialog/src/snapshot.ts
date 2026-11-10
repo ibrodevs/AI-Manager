@@ -1,4 +1,4 @@
-import type { Currency, PriceType, Weekday } from "@all/db";
+import type { Currency, PriceType, Weekday } from "@all/types";
 import { BLOCKS, type FieldValues } from "./questionnaire";
 
 /** Неизменяемый снимок опубликованной анкеты. Его держат в памяти голос и чаты. */

@@ -13,7 +13,7 @@
     "gen:tools": "tsx scripts/gen-tools.mjs"
   },
   "dependencies": {
-    "@all/db": "workspace:*"
+    "@all/types": "workspace:*"
   },
   "devDependencies": {
     "vitest": "4.1.12",

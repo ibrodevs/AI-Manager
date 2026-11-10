@@ -1,5 +1,5 @@
 import "server-only";
-import type { Appointment, Ticket } from "@all/db";
+import type { Appointment, Ticket } from "@all/types";
 import { db, emit } from "./store";
 
 /**

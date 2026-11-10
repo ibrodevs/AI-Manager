@@ -6,6 +6,6 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit -p ." },
-  "dependencies": { "@all/db": "workspace:*", "zod": "4.6.7" },
+  "dependencies": { "@all/types": "workspace:*", "zod": "4.6.7" },
   "devDependencies": { "vitest": "4.1.12", "@types/node": "24.19.2" }
 }

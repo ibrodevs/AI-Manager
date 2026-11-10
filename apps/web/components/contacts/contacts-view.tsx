@@ -8,7 +8,7 @@ import {
   Button, ConfirmDialog, DataTable, EmptyState, ErrorState, Field, FilterBar, Input, PageHeader, Pill, SectionTitle, Sheet, Skeleton, SplitView, Tag, Textarea, Tooltip, toast,
   type ColumnDef, type FilterDef, type SavedView,
 } from "@all/ui";
-import type { Contact } from "@all/db";
+import type { Contact } from "@all/types";
 import { fetchContact } from "@/lib/read";
 import { createContact, eraseContact, mergeContacts, updateContact } from "@/lib/actions";
 import { useListState, matchSearch } from "@/lib/use-list-state";

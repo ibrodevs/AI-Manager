@@ -10,11 +10,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test",
-    "provision:demo": "tsx scripts/provision-demo.ts"
+    "e2e": "playwright test"
   },
   "dependencies": {
-    "@all/db": "workspace:*",
+    "@all/types": "workspace:*",
     "@all/dialog": "workspace:*",
     "@all/integrations": "workspace:*",
     "@all/ui": "workspace:*",

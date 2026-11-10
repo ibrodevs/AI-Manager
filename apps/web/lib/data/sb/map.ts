@@ -1,7 +1,7 @@
 import "server-only";
 import type {
   AppNotification, Branch, Call, CallTurn, Company, Contact, Faq, Lead, LeadEvent, Service, StaffMember, UnansweredQuestion,
-} from "@all/db";
+} from "@all/types";
 import type { AssistantSettings, PhoneNumber } from "../types";
 
 /** Строки Supabase → доменные типы. Пустые значения — undefined, как в mock-хранилище. */

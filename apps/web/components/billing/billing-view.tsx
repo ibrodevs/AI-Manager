@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, Download, Plus } from "lucide-react";
 import { Button, Field, Input, Menu, MenuContent, MenuItem, MenuTrigger, PageHeader, Panel, Pill, UsageBar, cn, toast, type Tone } from "@all/ui";
-import type { Invoice, Plan, Usage } from "@all/db";
+import type { Invoice, Plan, Usage } from "@all/types";
 import { buyMinutes, setOverage } from "@/lib/actions";
 import { formatDate, formatMoney } from "@/lib/format";
 

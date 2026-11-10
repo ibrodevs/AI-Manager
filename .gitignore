@@ -25,3 +25,5 @@ HACKATHON_ACCESS.md
 
 # Separate backend checkout used only by integration CI
 .backend/
+
+*.tsbuildinfo

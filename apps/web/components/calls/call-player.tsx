@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useTranslations } from "next-intl";
 import { Pause, Play, RotateCcw, RotateCw, Search } from "lucide-react";
-import type { CallTurn } from "@all/db";
+import type { CallTurn } from "@all/types";
 import { cn } from "@all/ui";
 import { formatMs } from "@/lib/format";
 import { isTyping } from "@/lib/use-hotkeys";

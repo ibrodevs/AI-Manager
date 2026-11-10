@@ -8,7 +8,7 @@ import {
   MessagesSquare, MoreHorizontal, Phone, Plug, Search, Settings, UserCog, Users, Moon, Sun, LogOut, Keyboard, Languages, FlaskConical,
 } from "lucide-react";
 import { Avatar, Kbd, Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Tooltip, cn, toast } from "@all/ui";
-import type { AiMode, AppNotification, Member } from "@all/db";
+import type { AiMode, AppNotification, Member } from "@all/types";
 import { useHotkey } from "@/lib/use-hotkeys";
 import { useRealtime } from "@/lib/use-realtime";
 import { devLoginAs, logout, endSupport, setLocale } from "@/lib/actions";

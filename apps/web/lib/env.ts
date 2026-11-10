@@ -4,7 +4,7 @@ import { z } from "zod";
 // Все переменные проверяются при старте. Сервисный ключ и ключи LLM доступны только на сервере.
 const int = (d: number) => z.coerce.number().int().positive().default(d);
 const schema = z.object({
-  DATA_SOURCE: z.enum(["mock", "supabase", "django"]).default("mock"),
+  DATA_SOURCE: z.enum(["mock", "supabase", "django"]).default("django"),
   DJANGO_API_URL: z.string().url().default("http://127.0.0.1:8000/api/v1"),
   APP_URL: z.string().url().default("http://localhost:3000"),
   SUPABASE_URL: z.string().url().optional(),

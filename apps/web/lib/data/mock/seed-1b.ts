@@ -1,5 +1,5 @@
 // Демо-данные фазы 1б: чаты (виджет, Telegram, WhatsApp), ресурсы и записи, талоны, лист ожидания.
-import type { Appointment, ChatMessage, Conversation, Resource, Ticket, WaitlistEntry } from "@all/db";
+import type { Appointment, ChatMessage, Conversation, Resource, Ticket, WaitlistEntry } from "@all/types";
 import { contacts, services, staff } from "./seed";
 
 const NOW = Date.now();

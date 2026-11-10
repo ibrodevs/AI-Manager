@@ -7,7 +7,7 @@ import { buildPrompt, PROMPT_VERSION } from "./prompt";
 
 /**
  * Движок диалога. Один для голоса и чатов.
- * - LLM-путь: buildPrompt + TOOLS → провайдер (apps/voice, apps/workers/chat).
+ * - LLM-путь: buildPrompt + TOOLS → провайдер (AI-Manager-backend/legacy).
  * - Детерминированный путь (`respondOffline`) — для тестового чата анкеты без ключей провайдеров и для eval-смоука.
  * Оба пути проходят через одну охрану ответа.
  */

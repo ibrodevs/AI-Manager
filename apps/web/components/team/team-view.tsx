@@ -6,7 +6,7 @@ import { Copy, Link2, Plus, UserMinus, X, Crown } from "lucide-react";
 import {
   Avatar, Button, Checkbox, ConfirmDialog, DataTable, Field, Input, PageHeader, Pill, SectionTitle, Select, Sheet, SplitView, Tooltip, toast, type ColumnDef,
 } from "@all/ui";
-import type { Member, MemberRole } from "@all/db";
+import type { Member, MemberRole } from "@all/types";
 import { disableMember, inviteMember, linkTelegram, updateMember } from "@/lib/actions";
 import { formatPhone, relativeTime } from "@/lib/format";
 

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Command } from "cmdk";
 import { Dialog } from "radix-ui";
 import { ArrowRight, Phone, User, Inbox, Plus, Power, Upload, PhoneCall } from "lucide-react";
-import type { AiMode } from "@all/db";
+import type { AiMode } from "@all/types";
 import { setAiMode, publishQuestionnaire } from "@/lib/actions";
 import { formatPhone, relativeTime } from "@/lib/format";
 import { toast } from "@all/ui";

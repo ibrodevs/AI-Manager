@@ -2,7 +2,7 @@ import type {
   Appointment, ChatMessage, Conversation, Resource, Ticket, WaitlistEntry,
   AiMode, AppNotification, AuditEntry, Branch, Call, CallDetail, Company, Contact, Faq, Integration, IntegrationLog,
   Invoice, Lead, LeadEvent, Member, Plan, QuestionnaireVersion, Service, StaffMember, UnansweredQuestion, Usage,
-} from "@all/db";
+} from "@all/types";
 import type { FieldValues } from "@all/dialog";
 
 export interface PhoneNumber {

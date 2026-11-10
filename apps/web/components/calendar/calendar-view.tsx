@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Bot, Check, ChevronLeft, ChevronRight, Lock, Phone, Plus, Ticket as TicketIcon, UserPlus, UserX, X } from "lucide-react";
 import { Button, CardAction, Checkbox, Field, Input, KanbanBoard, PageHeader, Pill, SectionTitle, Segmented, Select, Textarea, cn, toast, type KanbanColumn, type Tone } from "@all/ui";
-import type { Appointment, Resource, Ticket, WaitlistEntry } from "@all/db";
+import type { Appointment, Resource, Ticket, WaitlistEntry } from "@all/types";
 import { addToWaitlist, cancelTicket, createAppointment, moveAppointment, offerToNext, resolveOffer, setAppointmentStatus } from "@/lib/actions-1b";
 import { useRealtime } from "@/lib/use-realtime";
 import { formatPhone, formatTime as baseFormatTime } from "@/lib/format";

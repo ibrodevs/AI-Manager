@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import type { CallDetail, Lead, Member, Plan } from "@all/db";
+import type { CallDetail, Lead, Member, Plan } from "@all/types";
 import { dayKeyInTz, hourInTz } from "../../format";
 import type { Session } from "../../auth";
 import { createServerSupabase } from "../../supabase/server";

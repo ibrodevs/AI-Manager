@@ -1,5 +1,5 @@
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import type { Currency } from "@all/db";
+import type { Currency } from "@all/types";
 
 export const COMPANY_TZ_DEFAULT = "Asia/Bishkek";
 

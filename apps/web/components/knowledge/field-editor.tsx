@@ -3,7 +3,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { Input, Select, Textarea, Tooltip, cn } from "@all/ui";
 import type { FieldDef } from "@all/dialog";
-import type { Weekday } from "@all/db";
+import type { Weekday } from "@all/types";
 
 /** Поле анкеты: подпись, уровень О/Р/Д, источник автозаполнения, подсказка «Что указать» и пример */
 export function FieldEditor({ def, value, source, onChange, disabled, levelLabel, levelFull, highlight }: { def: FieldDef; value: unknown; source?: string; onChange: (v: unknown) => void; disabled: boolean; levelLabel: string; levelFull: string; highlight?: boolean }) {

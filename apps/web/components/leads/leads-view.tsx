@@ -7,7 +7,7 @@ import {
   Avatar, BulkBar, Button, CardAction, KanbanBoard, type KanbanColumn, DataTable, EmptyState, FilterBar, Menu, MenuContent, MenuItem, MenuTrigger, PageHeader, Pill, Segmented, SplitView, Tooltip, cn, toast,
   type ColumnDef, type FilterDef, type SavedView, type Tone,
 } from "@all/ui";
-import type { Lead, LeadStatus } from "@all/db";
+import type { Lead, LeadStatus } from "@all/types";
 import { bulkUpdateLeads, updateLead } from "@/lib/actions";
 import { useRealtime } from "@/lib/use-realtime";
 import { useListState, matchSearch } from "@/lib/use-list-state";

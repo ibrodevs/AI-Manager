@@ -1,6 +1,6 @@
 import "server-only";
 import { buildSnapshot, completeness, type KbSnapshot } from "@all/dialog";
-import type { AiMode, Call, CallDetail, Lead, LeadEvent, LeadStatus, Usage } from "@all/db";
+import type { AiMode, Call, CallDetail, Lead, LeadEvent, LeadStatus, Usage } from "@all/types";
 import type {
   AssistantSettings, ContactTimelineItem, QuestionnaireState, RealtimeEvent,
 } from "../types";

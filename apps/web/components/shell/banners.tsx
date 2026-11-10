@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AlertTriangle, PowerOff } from "lucide-react";
-import type { AiMode } from "@all/db";
+import type { AiMode } from "@all/types";
 import { cn } from "@all/ui";
 import { setAiMode } from "@/lib/actions";
 

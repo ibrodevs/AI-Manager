@@ -6,7 +6,7 @@ import {
   Bot, Check, CheckCheck, KanbanSquare, List, ChevronLeft, Clock, FileText, Hand, Image as ImageIcon, Lock, Mic, PanelRightClose, PanelRightOpen, Paperclip, Pencil, Plus, Send, Search, X, Globe, Send as Tg, MessageCircle,
 } from "lucide-react";
 import { Avatar, Button, CardAction, Dash, EmptyState, ErrorState, KanbanBoard, Pill, SectionTitle, Segmented, Skeleton, Switch, Tabs, Tag, cn, toast, type KanbanColumn, type Tone } from "@all/ui";
-import type { ChatMessage, Conversation } from "@all/db";
+import type { ChatMessage, Conversation } from "@all/types";
 import { fetchConversation } from "@/lib/read";
 import { approveDraft, closeChat, createLeadFromChat, markRead, returnToAi, sendMessage, setDraftMode, simulateClientMessage, takeChat } from "@/lib/actions-1b";
 import { useRealtime } from "@/lib/use-realtime";

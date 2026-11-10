@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildSnapshot, completeness, type FieldValues, type KbSnapshot } from "@all/dialog";
-import type { Branch, Faq, QuestionnaireVersion, Service, StaffMember } from "@all/db";
+import type { Branch, Faq, QuestionnaireVersion, Service, StaffMember } from "@all/types";
 import type { QuestionnaireState } from "../types";
 import { toBranch, toFaq, toService, toStaff, toUnanswered } from "./map";
 

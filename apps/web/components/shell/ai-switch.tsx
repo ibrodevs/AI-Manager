@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, Check } from "lucide-react";
 import { Menu, MenuContent, MenuTrigger, cn, toast } from "@all/ui";
 import { DropdownMenu } from "radix-ui";
-import type { AiMode } from "@all/db";
+import type { AiMode } from "@all/types";
 import { setAiMode } from "@/lib/actions";
 
 const DOT: Record<AiMode, string> = { on: "bg-success", leads_only: "bg-warning", all_human: "bg-fg-faint", off: "bg-danger" };

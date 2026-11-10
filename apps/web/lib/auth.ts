@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { Member, MemberRole } from "@all/db";
+import type { Member, MemberRole } from "@all/types";
 import { db } from "./data/mock/store";
 import { env, mockAuthAllowed, isDjango } from "./env";
 import { createServerSupabase } from "./supabase/server";

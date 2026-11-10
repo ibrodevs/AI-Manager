@@ -13,7 +13,7 @@ const securityHeaders = [
 ];
 
 const config: NextConfig = {
-  transpilePackages: ["@all/ui", "@all/db", "@all/dialog", "@all/integrations"],
+  transpilePackages: ["@all/ui", "@all/types", "@all/dialog", "@all/integrations"],
   typedRoutes: false,
   poweredByHeader: false,
   // Server Function arguments may contain passwords, MFA codes and customer data.

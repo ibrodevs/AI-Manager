@@ -10,7 +10,7 @@
     "test": "turbo run test",
     "e2e": "pnpm --filter @all/web e2e",
     "eval": "pnpm --filter @all/dialog eval",
-    "db:types": "supabase gen types typescript --local > packages/db/src/database.types.ts"
+    "check:boundary": "node scripts/check-frontend-boundary.mjs"
   },
   "devDependencies": {
     "turbo": "2.11.10",

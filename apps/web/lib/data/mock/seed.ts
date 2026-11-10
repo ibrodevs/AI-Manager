@@ -4,7 +4,7 @@ import type {
   AppNotification, AuditEntry, Branch, Call, CallFlag, CallOutcome, CallTurn, CallType, Company, Contact, Faq,
   Integration, IntegrationLog, Invoice, Lead, LeadEvent, LeadStatus, LeadType, Member, Plan, Service, StaffMember,
   UnansweredQuestion,
-} from "@all/db";
+} from "@all/types";
 import type { FieldValues } from "@all/dialog";
 import type {
   AdminCompany, ApiKey, AssistantSettings, DemoCall, DemoLead, ModerationItem, NotificationPref, PhoneNumber,

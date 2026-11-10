@@ -1,6 +1,6 @@
 import "server-only";
 import { BLOCKS, missingRequired, type FieldValues } from "@all/dialog";
-import type { AiMode, Lead } from "@all/db";
+import type { AiMode, Lead } from "@all/types";
 import type { Session } from "../../auth";
 import { createServerSupabase } from "../../supabase/server";
 import type { AssistantSettings } from "../types";

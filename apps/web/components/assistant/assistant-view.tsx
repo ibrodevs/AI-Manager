@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Check, Lock, Play, Plus, X } from "lucide-react";
 import { Button, Field, Input, PageHeader, Select, Textarea, cn, toast } from "@all/ui";
 import type { AssistantSettings, PhoneNumber } from "@/lib/data/types";
-import type { Plan } from "@all/db";
+import type { Plan } from "@all/types";
 import { updateAssistant, updateNumber } from "@/lib/actions";
 import { formatPhone } from "@/lib/format";
 import { TestCall } from "./test-call";

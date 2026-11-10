@@ -3,7 +3,7 @@ import * as React from "react";
 import { Dialog } from "radix-ui";
 import { PhoneCall, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { CallTurn } from "@all/db";
+import type { CallTurn } from "@all/types";
 import type { DemoRecordingData } from "@/lib/demo-recordings";
 import { detectDemoRole, type DemoRole, type DialogState } from "@all/dialog";
 import { demoChat } from "@/lib/actions";
