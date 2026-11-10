@@ -17,3 +17,11 @@ supabase/.temp
 HACKATHON_ACCESS.md
 *.access.md
 .vercel
+
+# Django runtime data and generated files
+*.sqlite3
+*.sqlite3-*
+*.pyc
+
+# Separate backend checkout used only by integration CI
+.backend/

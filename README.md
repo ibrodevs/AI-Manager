@@ -1,3 +1,31 @@
+# AI-Manager — frontend
+
+Frontend ALL-менеджера: Next.js, React и TypeScript. Django backend находится в отдельном репозитории [ibrodevs/AI-Manager-backend](https://github.com/ibrodevs/AI-Manager-backend).
+
+Сначала запустите backend по инструкции в его README. Затем:
+
+```bash
+cp apps/web/.env.django.example apps/web/.env.local
+npx pnpm@10.33.0 install --frozen-lockfile
+npx pnpm@10.33.0 dev
+```
+
+Frontend: `http://localhost:3000`. В `.env.local` задаются `DATA_SOURCE=django` и `DJANGO_API_URL=http://127.0.0.1:8000/api/v1`. Запросы к Django выполняет сервер Next.js; браузер не получает backend-токен.
+
+Скрипт `./scripts/dev-django.sh` запускает только frontend. Backend развёртывается отдельно; его исходников в текущем дереве этого репозитория нет.
+
+- [Подключение к Django и сквозные проверки](docs/DJANGO_MVP.md)
+- [Матрица приёмки MVP](docs/MVP_ACCEPTANCE.md)
+- [ТЗ v2.4](docs/TZ_ALL-manager_v2.4.pdf)
+
+Полная приёмка ТЗ не завершена. Разделение репозиториев не меняет ранее описанные ограничения MVP.
+
+---
+
+## Предыдущая версия на Supabase
+
+Ниже сохранена документация исходного репозитория. Для новой установки используйте инструкции Django выше. `DATA_SOURCE=supabase` и `DATA_SOURCE=mock` остаются отдельными режимами совместимости.
+
 # ALL-менеджер
 
 Мультиарендная SaaS-платформа AI-администратора: ассистент отвечает на звонки компании голосом как живой человек,

@@ -1,0 +1,14 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      DATA_SOURCE: django
+      DJANGO_API_URL: ${DJANGO_API_URL:-http://host.docker.internal:8000/api/v1}
+      DEMO_ENVIRONMENT: '0'
+      ALLOW_MOCK_AUTH: '0'
+    ports:
+    - 127.0.0.1:3000:3000
+    extra_hosts:
+    - host.docker.internal:host-gateway
