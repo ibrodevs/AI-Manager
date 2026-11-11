@@ -15,6 +15,7 @@ Frontend: `http://localhost:3000`. В `.env.local` задаются `DATA_SOURCE
 Скрипт `./scripts/dev-django.sh` запускает только frontend. Backend развёртывается отдельно; его исходников в текущем дереве этого репозитория нет.
 
 - [Подключение к Django и сквозные проверки](docs/DJANGO_MVP.md)
+- [Отчёт о стабилизации этапа A](docs/PHASE_A_REPORT.md)
 - [Матрица приёмки MVP](docs/MVP_ACCEPTANCE.md)
 - [ТЗ v2.4](docs/TZ_ALL-manager_v2.4.pdf)
 

@@ -14,7 +14,7 @@ const schema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
   /** Метка «Demo Environment» в кабинете */
   DEMO_ENVIRONMENT: z.enum(["0", "1"]).default("1"),
-  /** Mock-вход (код 000000, переключатель ролей) в production-сборке выключен, пока явно не разрешён */
+  /** Устаревший флаг совместимости; mock-аутентификация разрешена только вне production. */
   ALLOW_MOCK_AUTH: z.enum(["0", "1"]).default("0"),
   // LLM: anthropic | openai | none. По умолчанию — тот, чей ключ задан.
   LLM_PROVIDER: z.enum(["anthropic", "openai", "none"]).optional(),
@@ -49,8 +49,8 @@ export const env = schema.parse(Object.fromEntries(Object.entries(process.env).f
 
 export const isSupabase = env.DATA_SOURCE === "supabase";
 
-/** Mock-вход разрешён только в разработке или по явному флагу */
-export const mockAuthAllowed = env.DATA_SOURCE === "mock" && (process.env.NODE_ENV !== "production" || env.ALLOW_MOCK_AUTH === "1");
+/** Production никогда не принимает mock-сессии, включая ALLOW_MOCK_AUTH=1. */
+export const mockAuthAllowed = env.DATA_SOURCE === "mock" && process.env.NODE_ENV !== "production";
 
 export type LlmConfig = { provider: "anthropic" | "openai"; model: string; key: string } | null;
 

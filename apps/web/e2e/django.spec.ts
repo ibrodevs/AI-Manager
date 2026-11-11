@@ -24,8 +24,7 @@ test("Django: password + required TOTP enrolment, session survives reload", asyn
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   const otp = page.getByLabel("Код из приложения аутентификации");
   await expect(otp).toBeVisible();
-  const setup = await page.locator("code").textContent();
-  const secret = process.env.E2E_TOTP_SECRET ?? setup;
+  const secret = process.env.E2E_TOTP_SECRET ?? await page.locator("code").textContent();
   expect(secret).toBeTruthy();
   await otp.fill(totp(secret!.trim()));
   await page.getByRole("button", { name: "Войти", exact: true }).click();
@@ -57,6 +56,40 @@ test("Django: all enabled cabinet screens render using real API data", async ({ 
   }
   await page.screenshot({ path: "test-results/django-cabinet.png", fullPage: true });
 });
+test("Django: lead status update persists and records history", async ({ page, request }) => {
+  const headers = { Authorization: `Bearer ${token}` };
+  const leads = await (await request.get(`${backend}/read/listLeads/`, { headers })).json();
+  const lead = leads.find((x: { title: string }) => x.title === `Django UI ${run}`);
+  expect(lead).toBeTruthy();
+  await page.goto(`/app/leads?open=${lead.id}`);
+  await page.getByTestId("lead-card").getByRole("button", { name: "Закрыть успешно", exact: true }).click();
+  await expect.poll(async () => (await (await request.get(`${backend}/leads/${lead.id}/`, { headers })).json()).status).toBe("won");
+  await page.reload();
+  const detail = await (await request.get(`${backend}/read/getLead/?id=${lead.id}`, { headers })).json();
+  expect(detail.events.some((x: { action: string; after?: { status: string } }) => x.action === "status" && x.after?.status === "won")).toBeTruthy();
+});
+test("Django: publish knowledge, keep snapshot immutable and rollback through UI", async ({ page, request }) => {
+  const headers = { Authorization: `Bearer ${token}` };
+  async function state() { return (await request.get(`${backend}/read/getQuestionnaire/`, { headers })).json(); }
+  const before = await state();
+  await page.goto("/app/knowledge");
+  const name = page.locator('[id="f-company.name"]');
+  await name.fill(`Published ${run}`);
+  await expect.poll(async () => (await state()).fields["company.name"]).toBe(`Published ${run}`);
+  await page.getByRole("button", { name: "Опубликовать", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Опубликовать", exact: true }).click();
+  await expect.poll(async () => (await state()).published.version).toBe(before.draft.version);
+  await name.fill(`Draft ${run}`);
+  await expect.poll(async () => (await state()).fields["company.name"]).toBe(`Draft ${run}`);
+  const exported = await (await request.get(`${backend}/export/`, { headers })).json();
+  const published = exported.questionnaires.find((q: { version: number }) => q.version === before.draft.version);
+  expect(published.snapshot.fields["company.name"]).toBe(`Published ${run}`);
+  await page.getByRole("button", { name: "Откатить", exact: true }).click();
+  await page.getByRole("menuitem").filter({ hasText: `v${before.published.version} ·` }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Откатить", exact: true }).click();
+  await expect.poll(async () => (await state()).published.version).toBe(before.draft.version + 1);
+  expect((await state()).fields["company.name"]).toBe(before.fields["company.name"]);
+});
 test("Django: assistant reads published price and saves a real lead", async ({ page, request }) => {
   await page.goto("/app/assistant");
   await page.getByTestId("start-text").click();
@@ -71,7 +104,14 @@ test("Django: assistant reads published price and saves a real lead", async ({ p
   const reply = await say("Меня зовут Азамат, телефон +996 555 000 302");
   expect(reply).toMatch(/заявк[аи]|уточн/i);
   const r = await request.get(`${backend}/read/listLeads/`, { headers: { Authorization: `Bearer ${token}` } });
-  expect((await r.json()).some((x: { source: string; contactPhone: string }) => x.source === "chat" && x.contactPhone === "+996555000302")).toBeTruthy();
+  const leads = await r.json();
+  const lead = leads.find((x: { source: string; contactPhone: string }) => x.source === "chat" && x.contactPhone === "+996555000302");
+  expect(lead).toBeTruthy();
+  const dialog = await (await request.get(`${backend}/read/getConversation/?id=${lead.sourceId}`, { headers: { Authorization: `Bearer ${token}` } })).json();
+  expect(dialog.messages.some((m: { author: string }) => m.author === "ai")).toBeTruthy();
+  const unknown = await say("Сколько стоит ремонт космического корабля?");
+  expect(unknown).toMatch(/уточн|администратор|подскажите.*услуг|нет.*информац/i);
+  expect(unknown).not.toMatch(/\d[\d\s]*сом/);
 });
 test("Django: settings persist through UI and do not enable a phone line", async ({ page, request }) => {
   await page.goto("/app/settings/company");
@@ -90,4 +130,38 @@ test("Django: invalid password does not create a session", async ({ browser }) =
   await expect(page.getByTestId("login-error")).toHaveText("Неверный email или пароль.");
   expect((await ctx.cookies()).some((c) => c.name === "all_django_session")).toBeFalsy();
   await ctx.close();
+});
+
+test("Django: accountant UI and API cannot access CRM", async ({ browser, request }) => {
+  const invitedEmail = `e2e.accountant.${run}@example.com`;
+  const invitation = await request.post(`${backend}/commands/inviteMember/`, {
+    headers: { Authorization: `Bearer ${token}` }, data: { args: [{ contact: invitedEmail, role: "accountant" }] },
+  });
+  expect(invitation.ok()).toBeTruthy();
+  const inviteToken = (await invitation.json()).inviteUrl.split("/invite/")[1];
+  const accepted = await request.post(`${backend}/auth/accept-invite/`, { data: { token: inviteToken, password, name: "E2E Accountant" } });
+  expect(accepted.status()).toBe(201);
+  const ctx = await browser.newContext(); const page = await ctx.newPage();
+  try {
+    await page.goto("/login");
+    await page.getByLabel("Email", { exact: true }).fill(invitedEmail);
+    await page.getByLabel("Пароль", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Войти", exact: true }).click();
+    await expect(page).toHaveURL(/\/app\/billing$/);
+    await page.goto("/app/leads"); await expect(page).toHaveURL(/\/app\/billing$/);
+    const accountantToken = (await ctx.cookies()).find((c) => c.name === "all_django_session")!.value;
+    expect((await request.get(`${backend}/leads/`, { headers: { Authorization: `Bearer ${accountantToken}` } })).status()).toBe(403);
+    expect((await ctx.request.get("/api/read/lead/00000000-0000-4000-8000-000000000000")).status()).toBe(403);
+  } finally { await ctx.close(); }
+});
+
+test("Django: logout revokes the backend session and cabinet access", async ({ page, request, context }) => {
+  await page.goto("/app");
+  const session = await (await request.get(`${backend}/auth/session/`, { headers: { Authorization: `Bearer ${token}` } })).json();
+  await page.getByRole("button").filter({ hasText: session.member.name }).click();
+  await page.getByRole("menuitem", { name: "Выйти", exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  expect((await context.cookies()).some((c) => c.name === "all_django_session")).toBeFalsy();
+  expect((await request.get(`${backend}/auth/session/`, { headers: { Authorization: `Bearer ${token}` } })).status()).toBe(401);
+  await page.goto("/app"); await expect(page).toHaveURL(/\/login/);
 });

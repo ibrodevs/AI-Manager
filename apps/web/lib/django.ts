@@ -18,14 +18,20 @@ export async function djangoFetch<T>(path: string, init?: RequestInit): Promise<
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const company = store.get("company")?.value;
   if (company) headers.set("X-Company-ID", company);
-  const res = await fetch(`${env.DJANGO_API_URL}${path}`, { ...init, headers, cache: "no-store", signal: AbortSignal.timeout(15_000) });
+  let res: Response;
+  try {
+    res = await fetch(`${env.DJANGO_API_URL}${path}`, { ...init, headers, cache: "no-store", signal: AbortSignal.timeout(15_000) });
+  } catch {
+    throw new DjangoError("Не удалось связаться с сервером. Повторите попытку.", 503);
+  }
   if (!res.ok) {
     const error = await res.json().catch(() => null) as { detail?: unknown } | null;
-    const detail = typeof error?.detail === "string" ? error.detail : res.status === 401 ? "Войдите снова." : res.status === 403 ? "Недостаточно прав." : res.status === 404 ? "Объект не найден." : "Проверьте введённые данные.";
+    const detail = res.status >= 500 ? "Сервер временно недоступен. Повторите попытку." : typeof error?.detail === "string" ? error.detail : res.status === 401 ? "Войдите снова." : res.status === 403 ? "Недостаточно прав." : res.status === 404 ? "Объект не найден." : "Проверьте введённые данные.";
     throw new DjangoError(detail, res.status);
   }
   if (res.status === 204) return undefined as T;
-  return await res.json() as T;
+  try { return await res.json() as T; }
+  catch { throw new DjangoError("Сервер вернул некорректный ответ. Повторите попытку.", 502); }
 }
 const readCached = cache((name: string, id?: string, days?: number) => {
   const query = new URLSearchParams();
