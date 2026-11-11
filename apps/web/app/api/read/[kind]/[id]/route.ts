@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
+import { DjangoError } from "@/lib/django";
 import { isSupabase } from "@/lib/env";
 import { getCall, getLead, getContact } from "@/lib/data/repo";
 import { getIntegrationLogs, getConversation } from "@/lib/data/repo";
@@ -25,6 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
     if (data === undefined || data === null) return NextResponse.json({ error: "not_found" }, { status: 404 });
     return NextResponse.json(data);
   } catch (e) {
+    if (e instanceof DjangoError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error(`[read] ${kind} failed`, e instanceof Error ? e.message : "unknown");
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
