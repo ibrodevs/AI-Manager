@@ -33,7 +33,7 @@ jobs:
         with:
           repository: ibrodevs/AI-Manager-backend
           # Tested backend source; update explicitly with the paired backend PR.
-          ref: 39d79d7e41fe0c511de3788179013c29b7e9ed41
+          ref: ec7b01bab5cf7fe3ffaf6ca8476e70ff77255513
           path: .backend
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
